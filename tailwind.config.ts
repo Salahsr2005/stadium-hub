@@ -57,33 +57,65 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Neobrutalism color palette
+        neo: {
+          blue: {
+            50: "hsl(var(--neo-blue-50))",
+            100: "hsl(var(--neo-blue-100))",
+            600: "hsl(var(--neo-blue-600))",
+            900: "hsl(var(--neo-blue-900))",
+          },
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        neo: "20px",
+      },
+      borderWidth: {
+        neo: "2px",
+        "neo-thick": "4px",
+      },
+      boxShadow: {
+        neo: "3px 3px 0px 0px hsl(224 76% 33%)",
+        "neo-sm": "2px 2px 0px 0px hsl(224 76% 33%)",
+        "neo-lg": "4px 4px 0px 0px hsl(217 91% 60%)",
+        "neo-xl": "6px 6px 0px 0px hsl(217 91% 60%)",
+        "neo-focus": "1px 2px 0px 0px hsl(217 91% 60%)",
+        "neo-header": "0px 4px 0px 0px hsl(224 76% 33%)",
+      },
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "fade-in": {
+          from: { opacity: "0", transform: "translateY(10px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "slide-in-right": {
+          from: { transform: "translateX(100%)" },
+          to: { transform: "translateX(0)" },
+        },
+        "bounce-soft": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-5px)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.5s ease-out forwards",
+        "slide-in-right": "slide-in-right 0.3s ease-out",
+        "bounce-soft": "bounce-soft 2s ease-in-out infinite",
       },
     },
   },

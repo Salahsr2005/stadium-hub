@@ -59,11 +59,11 @@ export default {
         },
         // Neobrutalism color palette
         neo: {
-          blue: {
-            50: "hsl(var(--neo-blue-50))",
-            100: "hsl(var(--neo-blue-100))",
-            600: "hsl(var(--neo-blue-600))",
-            900: "hsl(var(--neo-blue-900))",
+          green: {
+            50: "hsl(var(--neo-green-50))",
+            100: "hsl(var(--neo-green-100))",
+            600: "hsl(var(--neo-green-600))",
+            900: "hsl(var(--neo-green-900))",
           },
         },
       },
@@ -78,12 +78,12 @@ export default {
         "neo-thick": "4px",
       },
       boxShadow: {
-        neo: "3px 3px 0px 0px hsl(224 76% 33%)",
-        "neo-sm": "2px 2px 0px 0px hsl(224 76% 33%)",
-        "neo-lg": "4px 4px 0px 0px hsl(217 91% 60%)",
-        "neo-xl": "6px 6px 0px 0px hsl(217 91% 60%)",
-        "neo-focus": "1px 2px 0px 0px hsl(217 91% 60%)",
-        "neo-header": "0px 4px 0px 0px hsl(224 76% 33%)",
+        neo: "3px 3px 0px 0px hsl(143 64% 24%)",
+        "neo-sm": "2px 2px 0px 0px hsl(143 64% 24%)",
+        "neo-lg": "4px 4px 0px 0px hsl(142 71% 45%)",
+        "neo-xl": "6px 6px 0px 0px hsl(142 71% 45%)",
+        "neo-focus": "1px 2px 0px 0px hsl(142 71% 45%)",
+        "neo-header": "0px 4px 0px 0px hsl(143 64% 24%)",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],

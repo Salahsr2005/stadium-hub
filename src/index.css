@@ -6,91 +6,91 @@
 
 @layer base {
   :root {
-    /* Core Blue Palette */
-    --primary: 217 91% 60%;           /* Blue 600 #2563EB */
+    /* Core Green Palette */
+    --primary: 142 71% 45%;           /* Green 600 #16A34A */
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 214 95% 93%;         /* Blue 100 #DBEAFE */
-    --secondary-foreground: 224 76% 33%;
+    --secondary: 138 76% 93%;         /* Green 100 #DCFCE7 */
+    --secondary-foreground: 143 64% 24%;
     
-    --accent: 214 95% 93%;
-    --accent-foreground: 224 76% 33%;
+    --accent: 138 76% 93%;
+    --accent-foreground: 143 64% 24%;
     
     /* Base colors */
     --background: 0 0% 100%;
-    --foreground: 224 76% 33%;        /* Blue 900 #1E3A8A */
+    --foreground: 143 64% 24%;        /* Green 900 #14532D */
     
     --card: 0 0% 100%;
-    --card-foreground: 224 76% 33%;
+    --card-foreground: 143 64% 24%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 224 76% 33%;
+    --popover-foreground: 143 64% 24%;
     
-    --muted: 214 95% 93%;
-    --muted-foreground: 224 76% 33%;
+    --muted: 138 76% 93%;
+    --muted-foreground: 143 64% 24%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 224 76% 33%;
-    --input: 224 76% 33%;
-    --ring: 217 91% 60%;
+    --border: 143 64% 24%;
+    --input: 143 64% 24%;
+    --ring: 142 71% 45%;
     
     --radius: 0.5rem;
     
     /* Custom neobrutalism tokens */
-    --neo-blue-900: 224 76% 33%;
-    --neo-blue-600: 217 91% 60%;
-    --neo-blue-100: 214 95% 93%;
-    --neo-blue-50: 214 100% 97%;
+    --neo-green-900: 143 64% 24%;
+    --neo-green-600: 142 71% 45%;
+    --neo-green-100: 138 76% 93%;
+    --neo-green-50: 138 76% 97%;
     
     /* Shadow values for use in Tailwind */
-    --shadow-sm: 2px 2px 0px 0px hsl(224 76% 33%);
-    --shadow-md: 3px 3px 0px 0px hsl(224 76% 33%);
-    --shadow-lg: 4px 4px 0px 0px hsl(217 91% 60%);
-    --shadow-xl: 6px 6px 0px 0px hsl(217 91% 60%);
+    --shadow-sm: 2px 2px 0px 0px hsl(143 64% 24%);
+    --shadow-md: 3px 3px 0px 0px hsl(143 64% 24%);
+    --shadow-lg: 4px 4px 0px 0px hsl(142 71% 45%);
+    --shadow-xl: 6px 6px 0px 0px hsl(142 71% 45%);
     
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 224 76% 33%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-foreground: 143 64% 24%;
+    --sidebar-primary: 142 71% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 214 95% 93%;
-    --sidebar-accent-foreground: 224 76% 33%;
-    --sidebar-border: 224 76% 33%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 138 76% 93%;
+    --sidebar-accent-foreground: 143 64% 24%;
+    --sidebar-border: 143 64% 24%;
+    --sidebar-ring: 142 71% 45%;
   }
 
   .dark {
-    --primary: 217 91% 60%;
+    --primary: 142 71% 45%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 224 76% 20%;
-    --secondary-foreground: 214 95% 93%;
+    --secondary: 143 64% 20%;
+    --secondary-foreground: 138 76% 93%;
     
-    --background: 224 76% 10%;
-    --foreground: 214 95% 93%;
+    --background: 143 64% 10%;
+    --foreground: 138 76% 93%;
     
-    --card: 224 76% 15%;
-    --card-foreground: 214 95% 93%;
+    --card: 143 64% 15%;
+    --card-foreground: 138 76% 93%;
     
-    --popover: 224 76% 15%;
-    --popover-foreground: 214 95% 93%;
+    --popover: 143 64% 15%;
+    --popover-foreground: 138 76% 93%;
     
-    --muted: 224 76% 20%;
-    --muted-foreground: 214 80% 70%;
+    --muted: 143 64% 20%;
+    --muted-foreground: 138 80% 70%;
     
-    --border: 217 91% 60%;
-    --input: 217 91% 60%;
-    --ring: 217 91% 60%;
+    --border: 142 71% 45%;
+    --input: 142 71% 45%;
+    --ring: 142 71% 45%;
     
-    --sidebar-background: 224 76% 10%;
-    --sidebar-foreground: 214 95% 93%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-background: 143 64% 10%;
+    --sidebar-foreground: 138 76% 93%;
+    --sidebar-primary: 142 71% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 224 76% 20%;
-    --sidebar-accent-foreground: 214 95% 93%;
-    --sidebar-border: 217 91% 60%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 143 64% 20%;
+    --sidebar-accent-foreground: 138 76% 93%;
+    --sidebar-border: 142 71% 45%;
+    --sidebar-ring: 142 71% 45%;
   }
 }
 
@@ -111,19 +111,19 @@
 @layer utilities {
   /* Neobrutalism shadow utilities */
   .neo-shadow-sm {
-    box-shadow: 2px 2px 0px 0px hsl(224 76% 33%);
+    box-shadow: 2px 2px 0px 0px hsl(143 64% 24%);
   }
   
   .neo-shadow-md {
-    box-shadow: 3px 3px 0px 0px hsl(224 76% 33%);
+    box-shadow: 3px 3px 0px 0px hsl(143 64% 24%);
   }
   
   .neo-shadow-lg {
-    box-shadow: 4px 4px 0px 0px hsl(217 91% 60%);
+    box-shadow: 4px 4px 0px 0px hsl(142 71% 45%);
   }
   
   .neo-shadow-xl {
-    box-shadow: 6px 6px 0px 0px hsl(217 91% 60%);
+    box-shadow: 6px 6px 0px 0px hsl(142 71% 45%);
   }
   
   .neo-shadow-none {
@@ -139,6 +139,6 @@
   /* Hover lift effect */
   .neo-hover:hover {
     @apply -translate-y-0.5;
-    box-shadow: 6px 6px 0px 0px hsl(217 91% 60%);
+    box-shadow: 6px 6px 0px 0px hsl(142 71% 45%);
   }
 }

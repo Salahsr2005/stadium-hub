@@ -80,9 +80,9 @@ const capacityFilters = [
 
 const priceFilters = [
   { label: "Any Price", value: "all" },
-  { label: "Under $500", value: "budget" },
-  { label: "$500 - $1,000", value: "mid" },
-  { label: "$1,000+", value: "premium" },
+  { label: "Under 500 DZD", value: "budget" },
+  { label: "500 DZD - 1,000 DZD", value: "mid" },
+  { label: "1,000 DZD+", value: "premium" },
 ];
 
 const Stadiums = () => {

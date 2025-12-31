@@ -20,10 +20,7 @@ export const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary border-2 border-foreground rounded-lg shadow-neo-sm flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-xl">S</span>
-            </div>
-            <span className="font-black text-xl uppercase tracking-tighter">StadiumHub</span>
+            <img src="logo.png" alt="" className="w-24 h-24" />
           </Link>
 
           {/* Desktop Navigation */}

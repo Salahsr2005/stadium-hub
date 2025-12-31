@@ -31,7 +31,7 @@ const stats = [
   { label: "Total Bookings", value: "24", trend: "+12%", up: true, icon: Calendar },
   { label: "Upcoming", value: "3", trend: "This week", up: true, icon: Clock },
   { label: "Favorites", value: "8", trend: "+2 new", up: true, icon: Heart },
-  { label: "Total Spent", value: "$4,250", trend: "+8%", up: true, icon: TrendingUp },
+  { label: "Total Spent", value: "4,250 DZD", trend: "+8%", up: true, icon: TrendingUp },
 ];
 
 const recentBookings = [
@@ -41,7 +41,7 @@ const recentBookings = [
     date: "Jan 15, 2025",
     time: "2:00 PM - 5:00 PM",
     status: "upcoming",
-    price: "$1,500",
+    price: "1,500 DZD",
   },
   {
     id: "2",
@@ -49,7 +49,7 @@ const recentBookings = [
     date: "Jan 10, 2025",
     time: "10:00 AM - 2:00 PM",
     status: "completed",
-    price: "$4,800",
+    price: "4,800 DZD",
   },
   {
     id: "3",
@@ -57,7 +57,7 @@ const recentBookings = [
     date: "Jan 5, 2025",
     time: "6:00 PM - 9:00 PM",
     status: "completed",
-    price: "$2,250",
+    price: "2,250 DZD",
   },
 ];
 

@@ -14,10 +14,12 @@ import Register from "./pages/Register"
 import Dashboard from "./pages/Dashboard"
 import Profile from "./pages/Profile"
 import Stadiums from "./pages/Stadiums"
+import StadiumDetail from "./pages/StadiumDetail"
 import MyTeams from "./pages/MyTeams"
 import Browse from "./pages/Browse"
 import Favorites from "./pages/Favorites"
 import Settings from "./pages/Settings"
+import Wallet from "./pages/Wallet"
 import NotFound from "./pages/NotFound"
 
 const queryClient = new QueryClient()
@@ -103,6 +105,15 @@ const App = () => (
             }
           />
           <Route path="/stadiums" element={<Stadiums />} />
+          <Route path="/stadium/:id" element={<StadiumDetail />} />
+          <Route
+            path="/dashboard/wallet"
+            element={
+              <ProtectedRoute>
+                <Wallet />
+              </ProtectedRoute>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

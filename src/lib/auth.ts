@@ -13,6 +13,7 @@ export interface AuthUser {
   matches_played: number
   latitude?: number
   longitude?: number
+  created_at?: string
 }
 
 // Helper to generate a simple JWT-like token

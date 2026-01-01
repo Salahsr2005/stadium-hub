@@ -146,7 +146,8 @@ export const getNearbyStadiums = async (userLatitude?: number, userLongitude?: n
       amenities,
       price_per_hour,
       rating,
-      status
+      status,
+      created_at
     `,
     )
     .eq("status", "active")
@@ -190,6 +191,147 @@ export const getStadiumDetails = async (stadiumId: number) => {
     `,
     )
     .eq("stadium_id", stadiumId)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export const getAllStadiums = async (filters?: {
+  capacity?: "small" | "medium" | "large"
+  priceRange?: "budget" | "mid" | "premium"
+  amenities?: string[]
+  status?: string
+}) => {
+  let query = supabase
+    .from("stadiums")
+    .select(
+      `
+      stadium_id,
+      stadium_name,
+      location,
+      latitude,
+      longitude,
+      capacity,
+      surface_type,
+      amenities,
+      price_per_hour,
+      rating,
+      status
+    `,
+    )
+    .eq("status", filters?.status || "active")
+
+  // Apply capacity filters
+  if (filters?.capacity) {
+    switch (filters.capacity) {
+      case "small":
+        query = query.lt("capacity", 5000)
+        break
+      case "medium":
+        query = query.gte("capacity", 5000).lt("capacity", 10000)
+        break
+      case "large":
+        query = query.gte("capacity", 10000)
+        break
+    }
+  }
+
+  // Apply price filters
+  if (filters?.priceRange) {
+    switch (filters.priceRange) {
+      case "budget":
+        query = query.lt("price_per_hour", 500)
+        break
+      case "mid":
+        query = query.gte("price_per_hour", 500).lt("price_per_hour", 1000)
+        break
+      case "premium":
+        query = query.gte("price_per_hour", 1000)
+        break
+    }
+  }
+
+  const { data, error } = await query.order("rating", { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+
+export const searchStadiums = async (query: string) => {
+  const { data, error } = await supabase
+    .from("stadiums")
+    .select(
+      `
+      stadium_id,
+      stadium_name,
+      location,
+      latitude,
+      longitude,
+      capacity,
+      surface_type,
+      amenities,
+      price_per_hour,
+      rating,
+      status
+    `,
+    )
+    .or(`stadium_name.ilike.%${query}%,location.ilike.%${query}%`)
+    .eq("status", "active")
+    .order("rating", { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+
+export const getStadiumAvailability = async (stadiumId: number, date: string) => {
+  const { data, error } = await supabase
+    .from("schedules")
+    .select("start_time, end_time, status")
+    .eq("stadium_id", stadiumId)
+    .eq("match_date", date)
+    .order("start_time", { ascending: true })
+
+  if (error) throw error
+
+  // Return all possible time slots (assuming 2-hour slots from 6 AM to 10 PM)
+  const bookedSlots = new Set((data || []).map((s) => s.start_time))
+  const availableSlots = []
+
+  for (let hour = 6; hour < 22; hour++) {
+    const timeSlot = `${hour.toString().padStart(2, "0")}:00`
+    if (!bookedSlots.has(timeSlot)) {
+      availableSlots.push(timeSlot)
+    }
+  }
+
+  return {
+    stadiumId,
+    date,
+    availableSlots,
+    bookedSlots: Array.from(bookedSlots),
+  }
+}
+
+export const createStadiumBooking = async (
+  stadiumId: number,
+  teamId: number,
+  date: string,
+  startTime: string,
+  endTime: string,
+  price: number,
+) => {
+  const { data, error } = await supabase
+    .from("schedules")
+    .insert({
+      stadium_id: stadiumId,
+      team_id: teamId,
+      match_date: date,
+      start_time: startTime,
+      end_time: endTime,
+      status: "scheduled",
+    })
+    .select()
     .single()
 
   if (error) throw error

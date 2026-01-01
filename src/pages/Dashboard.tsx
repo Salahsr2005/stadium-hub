@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   Calendar,
   Search,
-  Heart,
   TrendingUp,
   TrendingDown,
   ChevronRight,
@@ -21,6 +20,7 @@ import {
 import { useAuth } from "@/hooks/useAuth"
 import { getUserStats, getUserTeamMemberships, getUserMatchHistory, getUserTransactions } from "@/lib/api"
 import { StadiumsList } from "@/components/StadiumsList"
+import { SchedulingDashboard } from "@/components/SchedulingDashboard"
 import { Button } from "@/components/ui/button"
 
 const Dashboard = () => {
@@ -30,7 +30,7 @@ const Dashboard = () => {
   const [teams, setTeams] = useState<any[]>([])
   const [transactions, setTransactions] = useState<any[]>([])
   const [dataLoading, setDataLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<"overview" | "stadiums">("overview")
+  const [activeTab, setActiveTab] = useState<"overview" | "stadiums" | "scheduling">("overview")
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -100,7 +100,7 @@ const Dashboard = () => {
   return (
     <DashboardLayout title={`Welcome Back, ${user.username}`}>
       <div className="space-y-6">
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           <Button
             variant={activeTab === "overview" ? "default" : "outline"}
             onClick={() => setActiveTab("overview")}
@@ -116,6 +116,14 @@ const Dashboard = () => {
           >
             <MapPin className="size-4" strokeWidth={2.5} />
             Nearby Stadiums
+          </Button>
+          <Button
+            variant={activeTab === "scheduling" ? "default" : "outline"}
+            onClick={() => setActiveTab("scheduling")}
+            className="gap-2"
+          >
+            <Calendar className="size-4" strokeWidth={2.5} />
+            Scheduling
           </Button>
         </div>
 
@@ -178,15 +186,15 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
               </Link>
-              <Link to="/dashboard/favorites" className="hover:shadow-neo-xl cursor-pointer group">
+              <Link to="/dashboard/scheduling" className="hover:shadow-neo-xl cursor-pointer group">
                 <Card>
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="p-3 bg-secondary rounded-lg border-2 border-foreground">
-                      <Heart className="size-6" strokeWidth={2.5} />
+                      <Calendar className="size-6" strokeWidth={2.5} />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-black uppercase text-sm">Saved Stadiums</h3>
-                      <p className="text-xs font-medium text-foreground/60">View favorites</p>
+                      <h3 className="font-black uppercase text-sm">Manage Schedules</h3>
+                      <p className="text-xs font-medium text-foreground/60">View & create matches</p>
                     </div>
                     <ChevronRight className="size-5 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
                   </CardContent>
@@ -265,8 +273,10 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </>
-        ) : (
+        ) : activeTab === "stadiums" ? (
           <StadiumsList userLatitude={stats?.latitude} userLongitude={stats?.longitude} />
+        ) : (
+          <SchedulingDashboard />
         )}
       </div>
     </DashboardLayout>

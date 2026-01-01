@@ -5,7 +5,19 @@ import type React from "react"
 import { useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Calendar, Search, Heart, Settings, Menu, X, Bell, Users, MapPin } from "lucide-react"
+import {
+  LayoutDashboard,
+  Calendar,
+  Search,
+  Heart,
+  Settings,
+  Menu,
+  X,
+  Bell,
+  Users,
+  MapPin,
+  TrendingUp,
+} from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 
 interface DashboardLayoutProps {
@@ -14,13 +26,30 @@ interface DashboardLayoutProps {
   showTabs?: boolean
 }
 
-const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: Calendar, label: "My Teams", href: "/dashboard/teams" },
-  { icon: Search, label: "Browse", href: "/dashboard/browse" },
-  { icon: Heart, label: "Favorites", href: "/dashboard/favorites" },
-  { icon: MapPin, label: "Stadiums", href: "/dashboard/stadiums" },
-  { icon: Settings, label: "Settings", href: "/dashboard/settings" },
+const navSections = [
+  {
+    label: "Main",
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+      { icon: Users, label: "My Teams", href: "/dashboard/teams" },
+      { icon: Search, label: "Browse", href: "/dashboard/browse" },
+    ],
+  },
+  {
+    label: "Venues & Scheduling",
+    items: [
+      { icon: MapPin, label: "Stadiums", href: "/dashboard/stadiums" },
+      { icon: Calendar, label: "Scheduling", href: "/dashboard/scheduling" },
+    ],
+  },
+  {
+    label: "Management",
+    items: [
+      { icon: TrendingUp, label: "Balance", href: "/dashboard/balance" },
+      { icon: Heart, label: "Favorites", href: "/dashboard/favorites" },
+      { icon: Settings, label: "Settings", href: "/dashboard/settings" },
+    ],
+  },
 ]
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title }) => {
@@ -46,25 +75,33 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title }) =>
             </Link>
           </div>
 
-          <nav className="flex-1 p-4 space-y-2">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.href
-              return (
-                <Link
-                  key={item.label}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 py-3 px-4 rounded-lg font-bold uppercase text-sm transition-all ${
-                    isActive
-                      ? "bg-primary text-primary-foreground border-2 border-foreground shadow-neo-sm"
-                      : "text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <item.icon className="size-5" strokeWidth={2.5} />
-                  {item.label}
-                </Link>
-              )
-            })}
+          <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+            {navSections.map((section) => (
+              <div key={section.label}>
+                <p className="text-xs font-black uppercase text-foreground/50 px-2 mb-2">{section.label}</p>
+                <div className="space-y-2">
+                  {section.items.map((item) => {
+                    const isActive = location.pathname === item.href
+                    return (
+                      <Link
+                        key={item.label}
+                        to={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center gap-3 py-3 px-4 rounded-lg font-bold uppercase text-sm transition-all ${
+                          isActive
+                            ? "bg-primary text-primary-foreground border-2 border-foreground shadow-neo-sm"
+                            : "text-foreground hover:bg-secondary"
+                        }`}
+                      >
+                        <item.icon className="size-5" strokeWidth={2.5} />
+                        {item.label}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+
             <Link
               to="/profile"
               onClick={() => setSidebarOpen(false)}

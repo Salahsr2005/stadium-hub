@@ -1,6 +1,8 @@
 "use client"
 
 import type React from "react"
+import SchedulingManagement from "./pages/SchedulingManagement"
+import Balance from "./pages/Balance"
 
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
@@ -85,6 +87,30 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Favorites />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/stadiums"
+            element={
+              <ProtectedRoute>
+                <Stadiums />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/scheduling"
+            element={
+              <ProtectedRoute>
+                <SchedulingManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/balance"
+            element={
+              <ProtectedRoute>
+                <Balance />
               </ProtectedRoute>
             }
           />

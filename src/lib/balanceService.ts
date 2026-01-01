@@ -22,11 +22,7 @@ export interface BalanceResult {
 
 // Get user's current balance
 export const getUserBalance = async (userId: number): Promise<number> => {
-  const { data, error } = await supabase
-    .from("users")
-    .select("wallet_balance")
-    .eq("user_id", userId)
-    .single()
+  const { data, error } = await supabase.from("users").select("wallet_balance").eq("user_id", userId).single()
 
   if (error || !data) {
     console.error("Error fetching balance:", error)
@@ -38,9 +34,9 @@ export const getUserBalance = async (userId: number): Promise<number> => {
 
 // Add funds to wallet (deposit)
 export const depositFunds = async (
-  userId: number, 
-  amount: number, 
-  description: string = "Wallet deposit"
+  userId: number,
+  amount: number,
+  description = "Wallet deposit",
 ): Promise<BalanceResult> => {
   if (amount <= 0) {
     return { success: false, message: "Amount must be positive" }
@@ -65,14 +61,10 @@ export const depositFunds = async (
       type: "deposit",
       amount: amount,
       description,
-      balance_after: newBalance
+      balance_after: newBalance,
     }
 
-    const { data: txData, error: txError } = await supabase
-      .from("transactions")
-      .insert(transaction)
-      .select()
-      .single()
+    const { data: txData, error: txError } = await supabase.from("transactions").insert(transaction).select().single()
 
     if (txError) {
       console.error("Transaction record error:", txError)
@@ -83,7 +75,7 @@ export const depositFunds = async (
       success: true,
       message: `Successfully deposited ${amount} DZD`,
       newBalance,
-      transaction: txData || transaction
+      transaction: txData || transaction,
     }
   } catch (error) {
     console.error("Deposit error:", error)
@@ -95,7 +87,7 @@ export const depositFunds = async (
 export const withdrawFunds = async (
   userId: number,
   amount: number,
-  description: string = "Wallet withdrawal"
+  description = "Wallet withdrawal",
 ): Promise<BalanceResult> => {
   if (amount <= 0) {
     return { success: false, message: "Amount must be positive" }
@@ -124,14 +116,10 @@ export const withdrawFunds = async (
       type: "withdrawal",
       amount: -amount, // Negative for withdrawals
       description,
-      balance_after: newBalance
+      balance_after: newBalance,
     }
 
-    const { data: txData, error: txError } = await supabase
-      .from("transactions")
-      .insert(transaction)
-      .select()
-      .single()
+    const { data: txData, error: txError } = await supabase.from("transactions").insert(transaction).select().single()
 
     if (txError) {
       console.error("Transaction record error:", txError)
@@ -141,7 +129,7 @@ export const withdrawFunds = async (
       success: true,
       message: `Successfully withdrew ${amount} DZD`,
       newBalance,
-      transaction: txData || transaction
+      transaction: txData || transaction,
     }
   } catch (error) {
     console.error("Withdrawal error:", error)
@@ -154,7 +142,7 @@ export const payEntryFee = async (
   userId: number,
   matchId: number,
   teamName: string,
-  entryFee: number
+  entryFee: number,
 ): Promise<BalanceResult> => {
   if (entryFee <= 0) {
     return { success: false, message: "Invalid entry fee" }
@@ -164,9 +152,9 @@ export const payEntryFee = async (
     const currentBalance = await getUserBalance(userId)
 
     if (currentBalance < entryFee) {
-      return { 
-        success: false, 
-        message: `Insufficient balance. You need ${entryFee} DZD but only have ${currentBalance} DZD` 
+      return {
+        success: false,
+        message: `Insufficient balance. You need ${entryFee} DZD but only have ${currentBalance} DZD`,
       }
     }
 
@@ -186,14 +174,10 @@ export const payEntryFee = async (
       type: "entry_fee",
       amount: -entryFee,
       description: `Match entry fee - ${teamName}`,
-      balance_after: newBalance
+      balance_after: newBalance,
     }
 
-    const { data: txData, error: txError } = await supabase
-      .from("transactions")
-      .insert(transaction)
-      .select()
-      .single()
+    const { data: txData, error: txError } = await supabase.from("transactions").insert(transaction).select().single()
 
     if (txError) {
       console.error("Transaction record error:", txError)
@@ -203,7 +187,7 @@ export const payEntryFee = async (
       success: true,
       message: `Entry fee of ${entryFee} DZD paid successfully`,
       newBalance,
-      transaction: txData || transaction
+      transaction: txData || transaction,
     }
   } catch (error) {
     console.error("Entry fee payment error:", error)
@@ -216,7 +200,7 @@ export const awardPrize = async (
   userId: number,
   matchId: number,
   prizeAmount: number,
-  description: string = "Match prize"
+  description = "Match prize",
 ): Promise<BalanceResult> => {
   if (prizeAmount <= 0) {
     return { success: false, message: "Invalid prize amount" }
@@ -240,14 +224,10 @@ export const awardPrize = async (
       type: "prize",
       amount: prizeAmount,
       description,
-      balance_after: newBalance
+      balance_after: newBalance,
     }
 
-    const { data: txData, error: txError } = await supabase
-      .from("transactions")
-      .insert(transaction)
-      .select()
-      .single()
+    const { data: txData, error: txError } = await supabase.from("transactions").insert(transaction).select().single()
 
     if (txError) {
       console.error("Transaction record error:", txError)
@@ -257,7 +237,7 @@ export const awardPrize = async (
       success: true,
       message: `Prize of ${prizeAmount} DZD awarded!`,
       newBalance,
-      transaction: txData || transaction
+      transaction: txData || transaction,
     }
   } catch (error) {
     console.error("Prize award error:", error)
@@ -266,11 +246,7 @@ export const awardPrize = async (
 }
 
 // Issue refund
-export const issueRefund = async (
-  userId: number,
-  amount: number,
-  reason: string
-): Promise<BalanceResult> => {
+export const issueRefund = async (userId: number, amount: number, reason: string): Promise<BalanceResult> => {
   if (amount <= 0) {
     return { success: false, message: "Invalid refund amount" }
   }
@@ -293,14 +269,10 @@ export const issueRefund = async (
       type: "refund",
       amount: amount,
       description: `Refund: ${reason}`,
-      balance_after: newBalance
+      balance_after: newBalance,
     }
 
-    const { data: txData, error: txError } = await supabase
-      .from("transactions")
-      .insert(transaction)
-      .select()
-      .single()
+    const { data: txData, error: txError } = await supabase.from("transactions").insert(transaction).select().single()
 
     if (txError) {
       console.error("Transaction record error:", txError)
@@ -310,7 +282,7 @@ export const issueRefund = async (
       success: true,
       message: `Refund of ${amount} DZD processed`,
       newBalance,
-      transaction: txData || transaction
+      transaction: txData || transaction,
     }
   } catch (error) {
     console.error("Refund error:", error)
@@ -319,11 +291,7 @@ export const issueRefund = async (
 }
 
 // Get transaction history
-export const getTransactionHistory = async (
-  userId: number,
-  limit: number = 20,
-  offset: number = 0
-): Promise<Transaction[]> => {
+export const getTransactionHistory = async (userId: number, limit = 20, offset = 0): Promise<Transaction[]> => {
   const { data, error } = await supabase
     .from("transactions")
     .select("*")
@@ -349,10 +317,10 @@ export const getTransactionSummary = async (userId: number) => {
     totalEntryFees: 0,
     totalPrizes: 0,
     totalRefunds: 0,
-    netFlow: 0
+    netFlow: 0,
   }
 
-  transactions.forEach(tx => {
+  transactions.forEach((tx) => {
     switch (tx.type) {
       case "deposit":
         summary.totalDeposits += tx.amount
@@ -372,8 +340,81 @@ export const getTransactionSummary = async (userId: number) => {
     }
   })
 
-  summary.netFlow = summary.totalDeposits + summary.totalPrizes + summary.totalRefunds 
-                   - summary.totalWithdrawals - summary.totalEntryFees
+  summary.netFlow =
+    summary.totalDeposits +
+    summary.totalPrizes +
+    summary.totalRefunds -
+    summary.totalWithdrawals -
+    summary.totalEntryFees
 
   return summary
+}
+
+export const calculateTeamBalanceMetrics = async (teamId: number) => {
+  const { data, error } = await supabase
+    .from("teams")
+    .select(
+      `
+      team_id,
+      team_name,
+      avg_skill,
+      avg_age,
+      player_count,
+      team_members (
+        user_id,
+        assigned_position,
+        users (skill_level, age)
+      )
+    `,
+    )
+    .eq("team_id", teamId)
+    .single()
+
+  if (error) {
+    console.error("[v0] Error fetching team for balance:", error)
+    return null
+  }
+
+  const members = data.team_members || []
+  const skillLevels = members.map((m: any) => m.users?.skill_level || 5)
+
+  // Calculate skill variance
+  const avgSkill = skillLevels.reduce((a, b) => a + b, 0) / skillLevels.length
+  const variance = skillLevels.reduce((sum, skill) => sum + Math.pow(skill - avgSkill, 2), 0) / skillLevels.length
+  const skillVariance = Math.sqrt(variance)
+
+  // Calculate position balance (ideal formation: 1 GK, 4 DEF, 4 MID, 2 FWD)
+  const positionCounts: Record<string, number> = {}
+  members.forEach((m: any) => {
+    const pos = m.assigned_position || "Unknown"
+    positionCounts[pos] = (positionCounts[pos] || 0) + 1
+  })
+
+  const idealFormation = { GK: 1, DEF: 4, MID: 4, FWD: 2 }
+  let positionBalance = 0
+  let totalPositions = 0
+
+  Object.entries(positionCounts).forEach(([pos, count]) => {
+    const ideal = idealFormation[pos as keyof typeof idealFormation] || 0
+    positionBalance += Math.abs(count - ideal)
+    totalPositions += ideal
+  })
+
+  const positionBalanceScore = Math.max(0, 100 - (positionBalance / totalPositions) * 100)
+
+  // Overall balance score: 40% skill variance + 35% position balance + 25% team completeness
+  const completenessScore = (data.player_count / 11) * 100
+  const overallScore = (skillVariance / 10) * 40 + (positionBalanceScore / 100) * 35 + (completenessScore / 100) * 25
+
+  return {
+    team_id: teamId,
+    team_name: data.team_name,
+    avg_skill: data.avg_skill,
+    avg_age: data.avg_age,
+    player_count: data.player_count,
+    skill_variance: skillVariance,
+    position_balance: positionBalanceScore,
+    overall_balance_score: Math.round(overallScore),
+    positions: positionCounts,
+  }
 }

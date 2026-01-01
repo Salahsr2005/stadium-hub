@@ -1,289 +1,276 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+"use client"
+
+import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import DashboardLayout from "@/components/DashboardLayout"
 import {
   LayoutDashboard,
   Calendar,
   Search,
   Heart,
-  Settings,
-  Menu,
-  X,
-  Bell,
   TrendingUp,
   TrendingDown,
-  Clock,
-  MapPin,
   ChevronRight,
-} from "lucide-react";
-
-const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: Calendar, label: "My Bookings", href: "/dashboard/bookings" },
-  { icon: Search, label: "Browse", href: "/stadiums" },
-  { icon: Heart, label: "Favorites", href: "/dashboard/favorites" },
-  { icon: Settings, label: "Settings", href: "/dashboard/settings" },
-];
-
-const stats = [
-  { label: "Total Bookings", value: "24", trend: "+12%", up: true, icon: Calendar },
-  { label: "Upcoming", value: "3", trend: "This week", up: true, icon: Clock },
-  { label: "Favorites", value: "8", trend: "+2 new", up: true, icon: Heart },
-  { label: "Total Spent", value: "4,250 DZD", trend: "+8%", up: true, icon: TrendingUp },
-];
-
-const recentBookings = [
-  {
-    id: "1",
-    stadium: "Riverside Arena",
-    date: "Jan 15, 2025",
-    time: "2:00 PM - 5:00 PM",
-    status: "upcoming",
-    price: "1,500 DZD",
-  },
-  {
-    id: "2",
-    stadium: "Olympic Complex",
-    date: "Jan 10, 2025",
-    time: "10:00 AM - 2:00 PM",
-    status: "completed",
-    price: "4,800 DZD",
-  },
-  {
-    id: "3",
-    stadium: "City Central Field",
-    date: "Jan 5, 2025",
-    time: "6:00 PM - 9:00 PM",
-    status: "completed",
-    price: "2,250 DZD",
-  },
-];
+  Wallet,
+  Trophy,
+  Users,
+  MapPin,
+} from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
+import { getUserStats, getUserTeamMemberships, getUserMatchHistory, getUserTransactions } from "@/lib/api"
+import { StadiumsList } from "@/components/StadiumsList"
+import { Button } from "@/components/ui/button"
 
 const Dashboard = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
+  const { user, loading } = useAuth()
+
+  const [stats, setStats] = useState<any>(null)
+  const [teams, setTeams] = useState<any[]>([])
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<"overview" | "stadiums">("overview")
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user || !user.user_id) return
+
+      try {
+        setDataLoading(true)
+        const [userStats, userTeams, , userTransactions] = await Promise.all([
+          getUserStats(user.user_id),
+          getUserTeamMemberships(user.user_id),
+          getUserMatchHistory(user.user_id),
+          getUserTransactions(user.user_id),
+        ])
+
+        setStats(userStats)
+        setTeams(userTeams || [])
+        setTransactions(userTransactions || [])
+      } catch (error) {
+        console.error("[v0] Error fetching user data:", error)
+      } finally {
+        setDataLoading(false)
+      }
+    }
+
+    fetchUserData()
+  }, [user])
+
+  const dashboardStats = [
+    {
+      label: "Current Level",
+      value: stats?.current_level || "0",
+      trend: "+0.5",
+      up: true,
+      icon: Trophy,
+    },
+    {
+      label: "Matches Played",
+      value: stats?.matches_played || "0",
+      trend: "This season",
+      up: true,
+      icon: Calendar,
+    },
+    {
+      label: "Active Teams",
+      value: teams.length,
+      trend: `+${teams.length > 0 ? 1 : 0} new`,
+      up: true,
+      icon: Users,
+    },
+    {
+      label: "Wallet Balance",
+      value: `${stats?.wallet_balance || 0} DZD`,
+      trend: `+${transactions.length} transactions`,
+      up: true,
+      icon: Wallet,
+    },
+  ]
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-2xl font-bold">Loading...</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-secondary/30 flex">
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-background border-r-4 border-foreground transform transition-transform duration-300 lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-4 border-b-4 border-foreground">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-primary border-2 border-foreground rounded-lg shadow-neo-sm flex items-center justify-center">
-                <span className="text-primary-foreground font-black text-xl">S</span>
-              </div>
-              <span className="font-black text-xl uppercase tracking-tighter">StadiumHub</span>
-            </Link>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.label}
-                  to={item.href}
-                  className={`flex items-center gap-3 py-3 px-4 rounded-lg font-bold uppercase text-sm transition-all ${
-                    isActive
-                      ? "bg-primary text-primary-foreground border-2 border-foreground shadow-neo-sm"
-                      : "text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <item.icon className="size-5" strokeWidth={2.5} />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* User */}
-          <div className="p-4 border-t-4 border-foreground">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-secondary border-2 border-foreground rounded-full flex items-center justify-center shadow-neo-sm">
-                <span className="font-black">JD</span>
-              </div>
-              <div>
-                <p className="font-black text-sm">John Doe</p>
-                <p className="text-xs font-medium text-foreground/60">john@example.com</p>
-              </div>
-            </div>
-          </div>
+    <DashboardLayout title={`Welcome Back, ${user.username}`}>
+      <div className="space-y-6">
+        <div className="flex gap-2 mb-6">
+          <Button
+            variant={activeTab === "overview" ? "default" : "outline"}
+            onClick={() => setActiveTab("overview")}
+            className="gap-2"
+          >
+            <LayoutDashboard className="size-4" strokeWidth={2.5} />
+            Overview
+          </Button>
+          <Button
+            variant={activeTab === "stadiums" ? "default" : "outline"}
+            onClick={() => setActiveTab("stadiums")}
+            className="gap-2"
+          >
+            <MapPin className="size-4" strokeWidth={2.5} />
+            Nearby Stadiums
+          </Button>
         </div>
-      </aside>
 
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-foreground/20 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main Content */}
-      <main className="flex-1 lg:ml-64">
-        {/* Top Bar */}
-        <header className="sticky top-0 bg-background border-b-4 border-foreground px-4 lg:px-6 py-4 z-30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                className="lg:hidden p-2 border-2 border-foreground rounded-lg shadow-neo-sm active:translate-y-0.5 active:shadow-none transition-all"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-              >
-                {sidebarOpen ? (
-                  <X className="size-6" strokeWidth={2.5} />
-                ) : (
-                  <Menu className="size-6" strokeWidth={2.5} />
-                )}
-              </button>
-              <div>
-                <h1 className="text-xl lg:text-2xl font-black uppercase tracking-tight">
-                  Welcome Back, John
-                </h1>
-                <p className="text-sm font-medium text-foreground/60 hidden sm:block">
-                  Here's what's happening with your bookings
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button className="relative p-2 bg-secondary border-2 border-foreground rounded-lg shadow-neo-sm hover:shadow-neo transition-all">
-                <Bell className="size-5" strokeWidth={2.5} />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-xs font-black rounded-full flex items-center justify-center border border-foreground">
-                  3
-                </span>
-              </button>
-              <div className="hidden sm:flex w-10 h-10 bg-primary border-2 border-foreground rounded-full items-center justify-center shadow-neo-sm">
-                <span className="font-black text-primary-foreground">JD</span>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Dashboard Content */}
-        <div className="p-4 lg:p-6 space-y-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {stats.map((stat) => (
-              <Card key={stat.label}>
-                <CardContent className="p-4 lg:p-6">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-xs lg:text-sm font-black uppercase tracking-tight text-foreground/60 mb-1">
-                        {stat.label}
-                      </p>
-                      <p className="text-2xl lg:text-4xl font-black">{stat.value}</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        {stat.up ? (
-                          <TrendingUp className="size-4 text-green-600" strokeWidth={2.5} />
-                        ) : (
-                          <TrendingDown className="size-4 text-red-600" strokeWidth={2.5} />
-                        )}
-                        <span className="text-xs font-bold text-foreground/60">{stat.trend}</span>
+        {activeTab === "overview" ? (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {dashboardStats.map((stat) => (
+                <Card key={stat.label}>
+                  <CardContent className="p-4 lg:p-6">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-xs lg:text-sm font-black uppercase tracking-tight text-foreground/60 mb-1">
+                          {stat.label}
+                        </p>
+                        <p className="text-2xl lg:text-4xl font-black">{dataLoading ? "-" : stat.value}</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          {stat.up ? (
+                            <TrendingUp className="size-4 text-green-600" strokeWidth={2.5} />
+                          ) : (
+                            <TrendingDown className="size-4 text-red-600" strokeWidth={2.5} />
+                          )}
+                          <span className="text-xs font-bold text-foreground/60">{stat.trend}</span>
+                        </div>
+                      </div>
+                      <div className="p-2 lg:p-3 bg-secondary rounded-lg border-2 border-foreground">
+                        <stat.icon className="size-5 lg:size-6" strokeWidth={2.5} />
                       </div>
                     </div>
-                    <div className="p-2 lg:p-3 bg-secondary rounded-lg border-2 border-foreground">
-                      <stat.icon className="size-5 lg:size-6" strokeWidth={2.5} />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Link to="/dashboard/stadiums" className="hover:shadow-neo-xl cursor-pointer group">
+                <Card>
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="p-3 bg-primary rounded-lg border-2 border-foreground">
+                      <Search className="size-6 text-primary-foreground" strokeWidth={2.5} />
                     </div>
+                    <div className="flex-1">
+                      <h3 className="font-black uppercase text-sm">Browse Stadiums</h3>
+                      <p className="text-xs font-medium text-foreground/60">Find your next venue</p>
+                    </div>
+                    <ChevronRight className="size-5 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/dashboard/browse" className="hover:shadow-neo-xl cursor-pointer group">
+                <Card>
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="p-3 bg-secondary rounded-lg border-2 border-foreground">
+                      <Users className="size-6" strokeWidth={2.5} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-black uppercase text-sm">Find Matches</h3>
+                      <p className="text-xs font-medium text-foreground/60">Join a team</p>
+                    </div>
+                    <ChevronRight className="size-5 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/dashboard/favorites" className="hover:shadow-neo-xl cursor-pointer group">
+                <Card>
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="p-3 bg-secondary rounded-lg border-2 border-foreground">
+                      <Heart className="size-6" strokeWidth={2.5} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-black uppercase text-sm">Saved Stadiums</h3>
+                      <p className="text-xs font-medium text-foreground/60">View favorites</p>
+                    </div>
+                    <ChevronRight className="size-5 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
+
+            {teams.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl lg:text-2xl">Your Active Teams</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {teams.slice(0, 3).map((membership: any) => (
+                      <div
+                        key={membership.id}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-secondary/50 rounded-lg border-2 border-foreground hover:bg-secondary transition-colors"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-black uppercase">{membership.teams?.team_name}</h4>
+                          <div className="flex flex-wrap items-center gap-3 mt-1 text-sm font-medium text-foreground/70">
+                            <span className="flex items-center gap-1">
+                              <Users className="size-4" strokeWidth={2.5} />
+                              {membership.teams?.player_count} players
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Trophy className="size-4" strokeWidth={2.5} />
+                              Skill: {membership.teams?.avg_skill?.toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Badge variant={membership.teams?.status === "full" ? "primary" : "default"}>
+                            {membership.teams?.status}
+                          </Badge>
+                          <span className="font-black text-sm">{membership.assigned_position}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            )}
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="hover:shadow-neo-xl cursor-pointer group" onClick={() => {}}>
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="p-3 bg-primary rounded-lg border-2 border-foreground">
-                  <Search className="size-6 text-primary-foreground" strokeWidth={2.5} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-black uppercase text-sm">Browse Stadiums</h3>
-                  <p className="text-xs font-medium text-foreground/60">Find your next venue</p>
-                </div>
-                <ChevronRight className="size-5 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-neo-xl cursor-pointer group" onClick={() => {}}>
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="p-3 bg-secondary rounded-lg border-2 border-foreground">
-                  <Calendar className="size-6" strokeWidth={2.5} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-black uppercase text-sm">New Booking</h3>
-                  <p className="text-xs font-medium text-foreground/60">Schedule an event</p>
-                </div>
-                <ChevronRight className="size-5 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-neo-xl cursor-pointer group" onClick={() => {}}>
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="p-3 bg-secondary rounded-lg border-2 border-foreground">
-                  <Heart className="size-6" strokeWidth={2.5} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-black uppercase text-sm">My Favorites</h3>
-                  <p className="text-xs font-medium text-foreground/60">View saved venues</p>
-                </div>
-                <ChevronRight className="size-5 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Bookings */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-xl lg:text-2xl">Recent Bookings</CardTitle>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/dashboard/bookings">View All</Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentBookings.map((booking) => (
-                  <div
-                    key={booking.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-secondary/50 rounded-lg border-2 border-foreground hover:bg-secondary transition-colors"
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-black uppercase">{booking.stadium}</h4>
-                      <div className="flex flex-wrap items-center gap-3 mt-1 text-sm font-medium text-foreground/70">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="size-4" strokeWidth={2.5} />
-                          {booking.date}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="size-4" strokeWidth={2.5} />
-                          {booking.time}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Badge
-                        variant={booking.status === "upcoming" ? "primary" : "default"}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-xl lg:text-2xl">Recent Transactions</CardTitle>
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {dataLoading ? (
+                    <p className="text-center text-foreground/60">Loading transactions...</p>
+                  ) : transactions.length > 0 ? (
+                    transactions.map((transaction: any) => (
+                      <div
+                        key={transaction.transaction_id}
+                        className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-foreground/20"
                       >
-                        {booking.status}
-                      </Badge>
-                      <span className="font-black text-lg">{booking.price}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    </div>
-  );
-};
+                        <div className="flex-1">
+                          <p className="font-black uppercase text-sm">{transaction.type}</p>
+                          <p className="text-xs text-foreground/60">
+                            {new Date(transaction.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <p className="font-black text-lg">{transaction.amount} DZD</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-foreground/60">No transactions yet</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <StadiumsList userLatitude={stats?.latitude} userLongitude={stats?.longitude} />
+        )}
+      </div>
+    </DashboardLayout>
+  )
+}
 
-export default Dashboard;
+export default Dashboard

@@ -1,16 +1,48 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import Stadiums from "./pages/Stadiums";
-import NotFound from "./pages/NotFound";
+"use client"
 
-const queryClient = new QueryClient();
+import type React from "react"
+
+import { Toaster } from "@/components/ui/toaster"
+import { Toaster as Sonner } from "@/components/ui/sonner"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import Index from "./pages/Index"
+import Login from "./pages/Login"
+import Register from "./pages/Register"
+import Dashboard from "./pages/Dashboard"
+import Profile from "./pages/Profile"
+import Stadiums from "./pages/Stadiums"
+import MyTeams from "./pages/MyTeams"
+import Browse from "./pages/Browse"
+import Favorites from "./pages/Favorites"
+import Settings from "./pages/Settings"
+import NotFound from "./pages/NotFound"
+
+const queryClient = new QueryClient()
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem("auth_token")
+      setIsAuthenticated(!!token)
+    }
+    checkAuth()
+  }, [])
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-2xl font-bold">Loading...</p>
+      </div>
+    )
+  }
+
+  return isAuthenticated ? children : <Navigate to="/login" />
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -22,7 +54,54 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/teams"
+            element={
+              <ProtectedRoute>
+                <MyTeams />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/browse"
+            element={
+              <ProtectedRoute>
+                <Browse />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/favorites"
+            element={
+              <ProtectedRoute>
+                <Favorites />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/stadiums" element={<Stadiums />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
@@ -30,6 +109,6 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+)
 
-export default App;
+export default App

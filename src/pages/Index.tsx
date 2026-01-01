@@ -101,7 +101,7 @@ const Index = () => {
             <p className="text-lg md:text-xl font-bold text-foreground/70 max-w-2xl mx-auto mb-8" style={{ animationDelay: "0.1s" }}>
               From corporate gatherings to sports tournaments, find the perfect venue for any occasion. Easy booking, transparent pricing.
             </p>
-            
+
             <div className="max-w-2xl mx-auto mb-8" style={{ animationDelay: "0.2s" }}>
               <SearchBar />
             </div>
@@ -121,7 +121,7 @@ const Index = () => {
             {[
               { value: "500+", label: "Stadiums" },
               { value: "10K+", label: "Bookings" },
-              { value: "50+", label: "Cities" },
+              { value: "3", label: "Cities" },
               { value: "4.9", label: "Rating" },
             ].map((stat) => (
               <div
@@ -166,7 +166,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
             {/* Connection lines (desktop only) */}
             <div className="hidden md:block absolute top-20 left-1/4 right-1/4 border-t-2 border-dashed border-foreground" />
-            
+
             {howItWorks.map((item) => (
               <div key={item.step} className="text-center relative">
                 <div className="w-20 h-20 rounded-full border-4 border-foreground bg-background shadow-neo-lg flex items-center justify-center mx-auto mb-6">
@@ -230,7 +230,7 @@ const Index = () => {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10"
+                  className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10"
                   asChild
                 >
                   <Link to="/contact">Contact Sales</Link>

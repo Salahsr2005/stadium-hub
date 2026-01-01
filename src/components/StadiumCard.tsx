@@ -69,7 +69,7 @@ export const StadiumCard = ({
 
         <div className="flex justify-between items-center mb-4">
           <div>
-            <span className="text-2xl font-black">${pricePerHour}</span>
+            <span className="text-2xl font-black">{pricePerHour} DZD</span>
             <span className="font-bold text-sm text-foreground/70"> / hour</span>
           </div>
         </div>

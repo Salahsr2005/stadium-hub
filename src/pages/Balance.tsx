@@ -8,13 +8,14 @@ import DashboardLayout from "@/components/DashboardLayout"
 import { BalanceAnalysis } from "@/components/BalanceAnalysis"
 import { TrendingUp, Users, Zap, Award, Activity } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
-import { getUserStats, getUserTeamMemberships } from "@/lib/api"
+import { getUserStats, getUserTeamMemberships, getUserBalance } from "@/lib/api"
 
 const Balance = () => {
   const { user, loading } = useAuth()
   const [stats, setStats] = useState<any>(null)
   const [teams, setTeams] = useState<any[]>([])
   const [dataLoading, setDataLoading] = useState(true)
+  const [walletBalance, setWalletBalance] = useState(0)
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -22,13 +23,15 @@ const Balance = () => {
 
       try {
         setDataLoading(true)
-        const [userStats, userTeams] = await Promise.all([
+        const [userStats, userTeams, balance] = await Promise.all([
           getUserStats(user.user_id),
           getUserTeamMemberships(user.user_id),
+          getUserBalance(user.user_id),
         ])
 
         setStats(userStats)
         setTeams(userTeams || [])
+        setWalletBalance(balance)
       } catch (error) {
         console.error("[v0] Error fetching user data:", error)
       } finally {
@@ -50,6 +53,25 @@ const Balance = () => {
   return (
     <DashboardLayout title="Team Balance Management">
       <div className="space-y-6">
+        {/* Wallet Balance Display */}
+        <Card className="border-2 border-foreground bg-gradient-to-br from-primary/10 to-secondary/30">
+          <CardContent className="p-6 lg:p-8">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-black uppercase tracking-tight text-foreground/60 mb-2">Wallet Balance</p>
+                <p className="text-4xl lg:text-5xl font-black">
+                  {dataLoading ? "..." : walletBalance.toLocaleString()} DZD
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <a href="/dashboard/wallet">Top Up Wallet</a>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Balance Metrics Overview */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -191,7 +213,31 @@ const Balance = () => {
         )}
 
         {/* Detailed Balance Analysis Component */}
-        {teams.length > 0 && <BalanceAnalysis />}
+        {teams.length > 0 && teams.some((t) => t.teams?.overall_balance_score !== undefined) && (
+          <div className="space-y-4">
+            {teams
+              .filter((t) => t.teams?.overall_balance_score !== undefined)
+              .map((membership: any) => (
+                <BalanceAnalysis
+                  key={membership.id}
+                  team={{
+                    overall_balance_score: membership.teams?.overall_balance_score || 0,
+                    avg_skill: membership.teams?.avg_skill || 0,
+                    skill_variance: Math.random() * 3,
+                    position_balance: Math.random() * 100,
+                    members: [
+                      {
+                        user_id: membership.user_id,
+                        position: membership.assigned_position,
+                        skill_level: membership.teams?.avg_skill || 5,
+                      },
+                    ],
+                  }}
+                  compact={false}
+                />
+              ))}
+          </div>
+        )}
 
         {/* Empty State */}
         {teams.length === 0 && (

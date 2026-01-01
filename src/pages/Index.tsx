@@ -217,7 +217,7 @@ const Index = () => {
                 Ready to Book Your Stadium?
               </h2>
               <p className="font-bold text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-                Join thousands of event organizers who trust StadiumHub for their venue needs.
+                Join thousands of event organizers who trust Matiko for their venue needs.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button

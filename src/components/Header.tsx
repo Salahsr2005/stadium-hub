@@ -20,7 +20,7 @@ export const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <img src="logo.png" alt="" className="w-24 h-24" />
+            <img src="image.webp" alt="" className="w-12 h-12 mt-0 opacity-[0.8]" />
           </Link>
 
           {/* Desktop Navigation */}

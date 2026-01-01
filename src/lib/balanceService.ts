@@ -10,7 +10,6 @@ export interface Transaction {
   amount: number
   description: string
   created_at?: string
-  balance_after: number
 }
 
 export interface BalanceResult {
@@ -55,13 +54,11 @@ export const depositFunds = async (
 
     if (updateError) throw updateError
 
-    // Create transaction record
     const transaction: Transaction = {
       user_id: userId,
       type: "deposit",
       amount: amount,
       description,
-      balance_after: newBalance,
     }
 
     const { data: txData, error: txError } = await supabase.from("transactions").insert(transaction).select().single()
@@ -110,13 +107,11 @@ export const withdrawFunds = async (
 
     if (updateError) throw updateError
 
-    // Create transaction record
     const transaction: Transaction = {
       user_id: userId,
       type: "withdrawal",
       amount: -amount, // Negative for withdrawals
       description,
-      balance_after: newBalance,
     }
 
     const { data: txData, error: txError } = await supabase.from("transactions").insert(transaction).select().single()
@@ -168,13 +163,11 @@ export const payEntryFee = async (
 
     if (updateError) throw updateError
 
-    // Create transaction record
     const transaction: Transaction = {
       user_id: userId,
       type: "entry_fee",
       amount: -entryFee,
       description: `Match entry fee - ${teamName}`,
-      balance_after: newBalance,
     }
 
     const { data: txData, error: txError } = await supabase.from("transactions").insert(transaction).select().single()
@@ -218,13 +211,11 @@ export const awardPrize = async (
 
     if (updateError) throw updateError
 
-    // Create transaction record
     const transaction: Transaction = {
       user_id: userId,
       type: "prize",
       amount: prizeAmount,
       description,
-      balance_after: newBalance,
     }
 
     const { data: txData, error: txError } = await supabase.from("transactions").insert(transaction).select().single()
@@ -263,13 +254,11 @@ export const issueRefund = async (userId: number, amount: number, reason: string
 
     if (updateError) throw updateError
 
-    // Create transaction record
     const transaction: Transaction = {
       user_id: userId,
       type: "refund",
       amount: amount,
       description: `Refund: ${reason}`,
-      balance_after: newBalance,
     }
 
     const { data: txData, error: txError } = await supabase.from("transactions").insert(transaction).select().single()

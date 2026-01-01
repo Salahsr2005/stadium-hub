@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
+import { payEntryFee } from "@/lib/balanceService"
 import { Users, Trophy, Calendar, MapPin, Trash2, CheckCircle, Clock } from "lucide-react"
 import DashboardLayout from "@/components/DashboardLayout"
 
@@ -90,26 +91,34 @@ const MyTeams = () => {
     }
   }
 
-  const handlePayEntry = async (teamId: number, membershipId: number) => {
+  const handlePayEntry = async (teamId: number, membershipId: number, teamName: string) => {
     try {
-      const { error: payError } = await supabase.from("team_members").update({ has_paid: true }).eq("id", membershipId)
+      const result = await payEntryFee(user?.user_id || 0, teamId, teamName, 50)
 
-      if (payError) throw payError
-
-      // Deduct from wallet
-      const { error: walletError } = await supabase.rpc("deduct_wallet", {
-        p_user_id: user?.user_id,
-        p_amount: 50,
-      })
-
-      if (!walletError) {
-        setTeams(teams.map((t) => (t.teams.team_id === teamId ? { ...t, has_paid: true } : t)))
+      if (!result.success) {
         toast({
-          title: "Success",
-          description: "Entry fee paid successfully",
+          title: "Payment Failed",
+          description: result.message,
+          variant: "destructive",
         })
+        return
       }
+
+      // Update has_paid status in database
+      const { error: updateError } = await supabase
+        .from("team_members")
+        .update({ has_paid: true })
+        .eq("id", membershipId)
+
+      if (updateError) throw updateError
+
+      setTeams(teams.map((t) => (t.teams.team_id === teamId ? { ...t, has_paid: true } : t)))
+      toast({
+        title: "Success",
+        description: result.message,
+      })
     } catch (error) {
+      console.error("[v0] Payment error:", error)
       toast({
         title: "Error",
         description: "Failed to process payment",
@@ -201,12 +210,12 @@ const MyTeams = () => {
                     <p className="text-xs font-bold uppercase text-foreground/60">Avg Skill</p>
                     <p className="text-xl font-black flex items-center justify-center gap-1">
                       <Trophy className="size-4" strokeWidth={2.5} />
-                      {membership.teams.avg_skill?.toFixed(1)}
+                      {(membership.teams.avg_skill || 0).toFixed(1)}
                     </p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs font-bold uppercase text-foreground/60">Avg Age</p>
-                    <p className="text-xl font-black">{membership.teams.avg_age?.toFixed(1)}</p>
+                    <p className="text-xl font-black">{(membership.teams.avg_age || 0).toFixed(1)}</p>
                   </div>
                 </div>
 
@@ -214,7 +223,9 @@ const MyTeams = () => {
                 <div className="flex gap-2 pt-4">
                   {!membership.has_paid && (
                     <Button
-                      onClick={() => handlePayEntry(membership.teams.team_id, membership.id)}
+                      onClick={() =>
+                        handlePayEntry(membership.teams.team_id, membership.id, membership.teams.team_name)
+                      }
                       className="flex-1 gap-2"
                     >
                       <CheckCircle className="size-4" strokeWidth={2.5} />

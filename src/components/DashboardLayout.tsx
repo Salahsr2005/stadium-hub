@@ -71,7 +71,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title }) =>
               <div className="w-10 h-10 bg-primary border-2 border-foreground rounded-lg shadow-neo-sm flex items-center justify-center">
                 <span className="text-primary-foreground font-black text-xl">S</span>
               </div>
-              <span className="font-black text-xl uppercase tracking-tighter">StadiumHub</span>
+              <span className="font-black text-xl uppercase tracking-tighter">Matiko</span>
             </Link>
           </div>
 

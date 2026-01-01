@@ -8,7 +8,6 @@ import DashboardLayout from "@/components/DashboardLayout"
 import {
   LayoutDashboard,
   Calendar,
-  Search,
   TrendingUp,
   TrendingDown,
   ChevronRight,
@@ -158,15 +157,18 @@ const Dashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link to="/dashboard/stadiums" className="hover:shadow-neo-xl cursor-pointer group">
+              <Link
+                to="/dashboard/stadiums"
+                className="hover:shadow-neo-xl cursor-pointer group col-span-1 md:col-span-2"
+              >
                 <Card>
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="p-3 bg-primary rounded-lg border-2 border-foreground">
-                      <Search className="size-6 text-primary-foreground" strokeWidth={2.5} />
+                      <MapPin className="size-6 text-primary-foreground" strokeWidth={2.5} />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-black uppercase text-sm">Browse Stadiums</h3>
-                      <p className="text-xs font-medium text-foreground/60">Find your next venue</p>
+                      <h3 className="font-black uppercase text-sm">Browse & Book Stadiums</h3>
+                      <p className="text-xs font-medium text-foreground/60">Find available venues near you</p>
                     </div>
                     <ChevronRight className="size-5 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
                   </CardContent>
@@ -186,21 +188,24 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
               </Link>
-              <Link to="/dashboard/scheduling" className="hover:shadow-neo-xl cursor-pointer group">
-                <Card>
-                  <CardContent className="p-6 flex items-center gap-4">
-                    <div className="p-3 bg-secondary rounded-lg border-2 border-foreground">
-                      <Calendar className="size-6" strokeWidth={2.5} />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-black uppercase text-sm">Manage Schedules</h3>
-                      <p className="text-xs font-medium text-foreground/60">View & create matches</p>
-                    </div>
-                    <ChevronRight className="size-5 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
-                  </CardContent>
-                </Card>
-              </Link>
             </div>
+
+            <Card className="border-2 border-foreground">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-xl lg:text-2xl flex items-center gap-2">
+                    <MapPin className="size-5" strokeWidth={2.5} />
+                    Featured Stadiums Near You
+                  </CardTitle>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/dashboard/stadiums">View All</Link>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <StadiumsList userLatitude={stats?.latitude} userLongitude={stats?.longitude} />
+              </CardContent>
+            </Card>
 
             {teams.length > 0 && (
               <Card>

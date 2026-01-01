@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Header } from "@/components/Header"
-import { Footer } from "@/components/Footer"
+import DashboardLayout from "@/components/DashboardLayout"
 import { SearchBar } from "@/components/SearchBar"
 import { StadiumCard } from "@/components/StadiumCard"
 import { Button } from "@/components/ui/button"
@@ -19,8 +18,8 @@ interface Stadium {
   latitude: number
   longitude: number
   capacity: number
-  surface_type: string
-  amenities?: string[]
+  
+  
   price_per_hour: number
   rating: number
   status: string
@@ -40,7 +39,7 @@ const Stadiums = () => {
   const [filters, setFilters] = useState({
     capacity: "all",
     priceRange: "all",
-    amenities: [] as string[],
+  
   })
 
   const capacityFilters = [
@@ -64,7 +63,6 @@ const Stadiums = () => {
       try {
         setLoading(true)
 
-        // Build filter object
         const filterObj: any = {}
         if (filters.capacity !== "all") {
           filterObj.capacity = filters.capacity
@@ -75,7 +73,6 @@ const Stadiums = () => {
 
         const data = await getAllStadiums(filterObj)
 
-        // If user is logged in, calculate distances
         if (user && user.latitude && user.longitude) {
           const stadiumsWithDistance = data.map((stadium) => ({
             ...stadium,
@@ -99,7 +96,6 @@ const Stadiums = () => {
   useEffect(() => {
     let result = [...stadiums]
 
-    // Apply search filter
     if (searchQuery) {
       result = result.filter(
         (stadium) =>
@@ -108,7 +104,6 @@ const Stadiums = () => {
       )
     }
 
-    // Apply sorting
     result.sort((a, b) => {
       switch (sortBy) {
         case "distance":
@@ -119,7 +114,7 @@ const Stadiums = () => {
           return a.price_per_hour - b.price_per_hour
         case "recommended":
         default:
-          return b.rating - a.rating // Default to rating
+          return b.rating - a.rating
       }
     })
 
@@ -138,25 +133,12 @@ const Stadiums = () => {
     }
   }
 
-  const toggleAmenity = (amenity: string) => {
-    setFilters({
-      ...filters,
-      amenities: filters.amenities.includes(amenity)
-        ? filters.amenities.filter((a) => a !== amenity)
-        : [...filters.amenities, amenity],
-    })
-  }
 
-  const clearFilters = () => {
-    setActiveFilters([])
-    setSearchQuery("")
-    setFilters({ capacity: "all", priceRange: "all", amenities: [] })
-    setSortBy("recommended")
-  }
 
-  // Haversine distance calculation
+
+
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371 // Earth's radius in km
+    const R = 6371
     const dLat = ((lat2 - lat1) * Math.PI) / 180
     const dLon = ((lon2 - lon1) * Math.PI) / 180
     const a =
@@ -167,181 +149,154 @@ const Stadiums = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <DashboardLayout title="Browse Stadiums">
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="mb-8">
+          <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight mb-2">Find the Perfect Venue</h2>
+          <p className="font-medium text-foreground/70">Discover and book stadiums for your next match</p>
+        </div>
 
-      <main className="pt-24 pb-12">
-        <div className="container mx-auto px-4">
-          {/* Page Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">Browse Stadiums</h1>
-            <p className="font-medium text-foreground/70">Find the perfect venue for your next match</p>
-          </div>
-
-          {/* Search & Filters */}
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Filter Sidebar */}
-            <aside className={`lg:w-72 ${showFilters ? "block" : "hidden lg:block"}`}>
-              <Card className="sticky top-24">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">Filters</CardTitle>
-                  <button className="lg:hidden" onClick={() => setShowFilters(false)}>
-                    <X className="size-5" strokeWidth={2.5} />
-                  </button>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Capacity Filter */}
-                  <div>
-                    <h4 className="font-black uppercase text-sm mb-3">Capacity</h4>
-                    <div className="space-y-2">
-                      {capacityFilters.map((filter) => (
-                        <label key={filter.value} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="capacity"
-                            value={filter.value}
-                            checked={filters.capacity === filter.value}
-                            onChange={(e) => setFilters({ ...filters, capacity: e.target.value })}
-                            className="w-5 h-5 border-2 border-foreground accent-primary"
-                          />
-                          <span className="font-medium">{filter.label}</span>
-                        </label>
-                      ))}
-                    </div>
+        {/* Search & Filters */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Filter Sidebar */}
+          <aside className={`lg:w-72 ${showFilters ? "block" : "hidden lg:block"}`}>
+            <Card className="sticky top-24">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">Filters</CardTitle>
+                <button className="lg:hidden" onClick={() => setShowFilters(false)}>
+                  <X className="size-5" strokeWidth={2.5} />
+                </button>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Capacity Filter */}
+                <div>
+                  <h4 className="font-black uppercase text-sm mb-3">Capacity</h4>
+                  <div className="space-y-2">
+                    {capacityFilters.map((filter) => (
+                      <label key={filter.value} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="capacity"
+                          value={filter.value}
+                          checked={filters.capacity === filter.value}
+                          onChange={(e) => setFilters({ ...filters, capacity: e.target.value })}
+                          className="w-5 h-5 border-2 border-foreground accent-primary"
+                        />
+                        <span className="font-medium">{filter.label}</span>
+                      </label>
+                    ))}
                   </div>
+                </div>
 
-                  {/* Price Filter */}
-                  <div>
-                    <h4 className="font-black uppercase text-sm mb-3">Price Range</h4>
-                    <div className="space-y-2">
-                      {priceFilters.map((filter) => (
-                        <label key={filter.value} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="price"
-                            value={filter.value}
-                            checked={filters.priceRange === filter.value}
-                            onChange={(e) => setFilters({ ...filters, priceRange: e.target.value })}
-                            className="w-5 h-5 border-2 border-foreground accent-primary"
-                          />
-                          <span className="font-medium">{filter.label}</span>
-                        </label>
-                      ))}
-                    </div>
+                {/* Price Filter */}
+                <div>
+                  <h4 className="font-black uppercase text-sm mb-3">Price Range</h4>
+                  <div className="space-y-2">
+                    {priceFilters.map((filter) => (
+                      <label key={filter.value} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="price"
+                          value={filter.value}
+                          checked={filters.priceRange === filter.value}
+                          onChange={(e) => setFilters({ ...filters, priceRange: e.target.value })}
+                          className="w-5 h-5 border-2 border-foreground accent-primary"
+                        />
+                        <span className="font-medium">{filter.label}</span>
+                      </label>
+                    ))}
                   </div>
+                </div>
 
-                  {/* Amenities */}
-                  <div>
-                    <h4 className="font-black uppercase text-sm mb-3">Amenities</h4>
-                    <div className="space-y-2">
-                      {amenityOptions.map((amenity) => (
-                        <label key={amenity} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={filters.amenities.includes(amenity)}
-                            onChange={() => toggleAmenity(amenity)}
-                            className="w-5 h-5 border-2 border-foreground rounded accent-primary"
-                          />
-                          <span className="font-medium">{amenity}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
 
-                  <Button className="w-full">Apply Filters</Button>
-                  <Button variant="outline" className="w-full bg-transparent" onClick={clearFilters}>
-                    Clear All
-                  </Button>
-                </CardContent>
-              </Card>
-            </aside>
+                <Button className="w-full">Apply Filters</Button>
+                
+              </CardContent>
+            </Card>
+          </aside>
+
+          {/* Stadium Grid */}
+          <div className="flex-1">
+            {/* Search Bar */}
+            <div className="mb-6">
+              <SearchBar onSearch={handleSearch} onFilter={() => setShowFilters(!showFilters)} />
+            </div>
+
+            {/* Active Filters */}
+            {activeFilters.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {activeFilters.map((filter) => (
+                  <Badge key={filter} className="flex items-center gap-1">
+                    {filter}
+                    <button onClick={() => setActiveFilters(activeFilters.filter((f) => f !== filter))}>
+                      <X className="size-3" strokeWidth={3} />
+                    </button>
+                  </Badge>
+                ))}
+              
+              </div>
+            )}
+
+            {/* Results Count & Sort */}
+            <div className="flex items-center justify-between mb-6">
+              <p className="font-bold">
+                <span className="font-black">{loading ? 0 : filteredStadiums.length}</span> stadiums found
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold">Sort by:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="px-3 py-2 border-2 border-foreground rounded-lg text-sm font-medium"
+                >
+                  <option value="recommended">Recommended</option>
+                  <option value="distance">Nearest</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="price">Lowest Price</option>
+                </select>
+              </div>
+            </div>
 
             {/* Stadium Grid */}
-            <div className="flex-1">
-              {/* Search Bar */}
-              <div className="mb-6">
-                <SearchBar onSearch={handleSearch} onFilter={() => setShowFilters(!showFilters)} />
-              </div>
-
-              {/* Active Filters */}
-              {activeFilters.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {activeFilters.map((filter) => (
-                    <Badge key={filter} className="flex items-center gap-1">
-                      {filter}
-                      <button onClick={() => setActiveFilters(activeFilters.filter((f) => f !== filter))}>
-                        <X className="size-3" strokeWidth={3} />
-                      </button>
-                    </Badge>
-                  ))}
-                  <button className="text-sm font-bold text-primary underline" onClick={clearFilters}>
-                    Clear all
-                  </button>
-                </div>
-              )}
-
-              {/* Results Count & Sort */}
-              <div className="flex items-center justify-between mb-6">
-                <p className="font-bold">
-                  <span className="font-black">{loading ? 0 : filteredStadiums.length}</span> stadiums found
-                </p>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold">Sort by:</span>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
-                    className="px-3 py-2 border-2 border-foreground rounded-lg text-sm font-medium"
-                  >
-                    <option value="recommended">Recommended</option>
-                    <option value="distance">Nearest</option>
-                    <option value="rating">Highest Rated</option>
-                    <option value="price">Lowest Price</option>
-                  </select>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <Loader2 className="size-8 animate-spin mx-auto mb-2 text-primary" strokeWidth={2} />
+                  <p className="font-bold">Loading stadiums...</p>
                 </div>
               </div>
-
-              {/* Stadium Grid */}
-              {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <Loader2 className="size-8 animate-spin mx-auto mb-2 text-primary" strokeWidth={2} />
-                    <p className="font-bold">Loading stadiums...</p>
-                  </div>
+            ) : filteredStadiums.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredStadiums.map((stadium) => (
+                  <StadiumCard
+                    key={stadium.stadium_id}
+                    id={stadium.stadium_id.toString()}
+                    name={stadium.stadium_name}
+                    location={stadium.location}
+                    capacity={stadium.capacity}
+                    pricePerHour={stadium.price_per_hour}
+                    rating={stadium.rating}
+                    imageUrl={`/placeholder.svg?height=300&width=400&query=${encodeURIComponent(stadium.stadium_name)}`}
+                    featured={stadium.rating >= 4.7}
+                    distance={stadium.distance}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <div className="w-20 h-20 bg-secondary border-2 border-foreground rounded-full flex items-center justify-center mx-auto mb-4">
+                  <SlidersHorizontal className="size-8" strokeWidth={2.5} />
                 </div>
-              ) : filteredStadiums.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredStadiums.map((stadium) => (
-                    <StadiumCard
-                      key={stadium.stadium_id}
-                      id={stadium.stadium_id.toString()}
-                      name={stadium.stadium_name}
-                      location={stadium.location}
-                      capacity={stadium.capacity}
-                      pricePerHour={stadium.price_per_hour}
-                      rating={stadium.rating}
-                      imageUrl={`/placeholder.svg?height=300&width=400&query=${encodeURIComponent(stadium.stadium_name)}`}
-                      featured={stadium.rating >= 4.7}
-                      distance={stadium.distance}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-secondary border-2 border-foreground rounded-full flex items-center justify-center mx-auto mb-4">
-                    <SlidersHorizontal className="size-8" strokeWidth={2.5} />
-                  </div>
-                  <h3 className="text-xl font-black uppercase mb-2">No Stadiums Found</h3>
-                  <p className="font-medium text-foreground/70 mb-4">Try adjusting your search or filters</p>
-                  <Button onClick={clearFilters}>Clear Filters</Button>
-                </div>
-              )}
-            </div>
+                <h3 className="text-xl font-black uppercase mb-2">No Stadiums Found</h3>
+                <p className="font-medium text-foreground/70 mb-4">Try adjusting your search or filters</p>
+                
+              </div>
+            )}
           </div>
         </div>
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </DashboardLayout>
   )
 }
 

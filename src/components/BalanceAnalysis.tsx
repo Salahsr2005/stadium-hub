@@ -9,7 +9,7 @@ import { Trophy, Users, AlertCircle } from "lucide-react"
 import type { BalancedTeamFormation } from "@/lib/enhancedMatchmaking"
 
 interface BalanceAnalysisProps {
-  team: BalancedTeamFormation
+  team?: BalancedTeamFormation | null
   compact?: boolean
 }
 
@@ -17,14 +17,29 @@ export const BalanceAnalysis = ({ team, compact = false }: BalanceAnalysisProps)
   const [scoreColor, setScoreColor] = useState<"green" | "yellow" | "red">("green")
 
   useEffect(() => {
-    if (team.overall_balance_score >= 80) {
-      setScoreColor("green")
-    } else if (team.overall_balance_score >= 60) {
-      setScoreColor("yellow")
-    } else {
-      setScoreColor("red")
+    if (team) {
+      if (team.overall_balance_score >= 80) {
+        setScoreColor("green")
+      } else if (team.overall_balance_score >= 60) {
+        setScoreColor("yellow")
+      } else {
+        setScoreColor("red")
+      }
     }
-  }, [team.overall_balance_score])
+  }, [team])
+
+  if (!team) {
+    return (
+      <Card className="border-2 border-foreground">
+        <CardContent className="p-6">
+          <div className="text-center">
+            <AlertCircle className="size-8 mx-auto mb-2 text-foreground/40" strokeWidth={2} />
+            <p className="font-bold text-foreground/60">No team data available</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   if (compact) {
     return (

@@ -8,37 +8,29 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import {
-  MapPin,
-  Users,
-  Star,
-  Clock,
-  ChevronLeft,
-  Check,
-  Calendar,
-  Phone,
-  Mail,
-  Bookmark,
-  Share2
-} from "lucide-react"
-import { seedStadiums, seedReviews, getSeedReviewsByStadiumId, seedUsers } from "@/lib/seedData"
+import { useAuth } from "@/hooks/useAuth"
+import { bookStadium } from "@/lib/stadiumService"
+import { MapPin, Users, Star, Clock, ChevronLeft, Calendar, Phone, Mail, Bookmark, Share2 } from "lucide-react"
+import { seedStadiums, getSeedReviewsByStadiumId, seedUsers } from "@/lib/seedData"
 
 const StadiumDetail = () => {
   const { id } = useParams<{ id: string }>()
   const { toast } = useToast()
+  const { user } = useAuth()
   const [stadium, setStadium] = useState<any>(null)
   const [reviews, setReviews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedTime, setSelectedTime] = useState("")
+  const [isBooking, setIsBooking] = useState(false)
 
   useEffect(() => {
     // Use seed data
-    const stadiumId = parseInt(id || "1")
-    const foundStadium = seedStadiums.find(s => s.stadium_id === stadiumId)
-    const stadiumReviews = getSeedReviewsByStadiumId(stadiumId).map(review => ({
+    const stadiumId = Number.parseInt(id || "1")
+    const foundStadium = seedStadiums.find((s) => s.stadium_id === stadiumId)
+    const stadiumReviews = getSeedReviewsByStadiumId(stadiumId).map((review) => ({
       ...review,
-      username: seedUsers.find(u => u.user_id === review.user_id)?.username || "Anonymous"
+      username: seedUsers.find((u) => u.user_id === review.user_id)?.username || "Anonymous",
     }))
 
     setStadium(foundStadium)
@@ -46,38 +38,77 @@ const StadiumDetail = () => {
     setLoading(false)
   }, [id])
 
-  const timeSlots = [
-    "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"
-  ]
+  const timeSlots = ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"]
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!selectedDate || !selectedTime) {
       toast({
         title: "Error",
         description: "Please select a date and time slot",
-        variant: "destructive"
+        variant: "destructive",
       })
       return
     }
 
-    toast({
-      title: "Booking Request Sent",
-      description: `Your booking for ${stadium.stadium_name} on ${selectedDate} at ${selectedTime} has been submitted.`
-    })
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to book",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setIsBooking(true)
+
+      const result = await bookStadium(
+        stadium.stadium_id,
+        1, // Default team ID - should be user's team
+        user.user_id,
+        selectedDate,
+        selectedTime,
+        stadium.price_per_hour || 2500,
+      )
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: result.message,
+        })
+        setSelectedDate("")
+        setSelectedTime("")
+      } else {
+        toast({
+          title: "Booking Failed",
+          description: result.message,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("[v0] Booking error:", error)
+      toast({
+        title: "Error",
+        description: "Failed to process booking",
+        variant: "destructive",
+      })
+    } finally {
+      setIsBooking(false)
+    }
   }
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href)
     toast({
       title: "Link Copied",
-      description: "Stadium link copied to clipboard"
+      description: "Stadium link copied to clipboard",
     })
   }
 
   const handleSave = () => {
     toast({
       title: "Saved",
-      description: "Stadium added to your favorites"
+      description: "Stadium added to your favorites",
     })
   }
 
@@ -128,7 +159,7 @@ const StadiumDetail = () => {
               {/* Stadium Image */}
               <div className="relative overflow-hidden rounded-xl border-2 border-foreground shadow-neo-lg">
                 <img
-                  src={stadium.imageUrl}
+                  src={stadium.imageUrl || "/placeholder.svg"}
                   alt={stadium.stadium_name}
                   className="w-full h-64 lg:h-96 object-cover"
                 />
@@ -187,23 +218,6 @@ const StadiumDetail = () => {
                       <Star className="size-6 mx-auto mb-2 text-yellow-500" strokeWidth={2.5} />
                       <p className="text-2xl font-black">{stadium.rating}</p>
                       <p className="text-xs font-bold uppercase text-foreground/60">Rating</p>
-                    </div>
-                    <div className="text-center p-4 bg-secondary/50 rounded-lg border border-foreground/20">
-                      <Badge className="mb-2">{stadium.surface_type}</Badge>
-                      <p className="text-xs font-bold uppercase text-foreground/60 mt-2">Surface</p>
-                    </div>
-                  </div>
-
-                  {/* Amenities */}
-                  <div>
-                    <h3 className="font-black uppercase text-sm mb-3">Amenities</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {stadium.amenities.map((amenity: string) => (
-                        <Badge key={amenity} variant="outline" className="gap-1">
-                          <Check className="size-3" strokeWidth={3} />
-                          {amenity}
-                        </Badge>
-                      ))}
                     </div>
                   </div>
                 </CardContent>
@@ -268,9 +282,7 @@ const StadiumDetail = () => {
                 <CardContent className="space-y-4">
                   {/* Date Selection */}
                   <div>
-                    <label className="block text-sm font-black uppercase tracking-tight mb-2">
-                      Select Date
-                    </label>
+                    <label className="block text-sm font-black uppercase tracking-tight mb-2">Select Date</label>
                     <input
                       type="date"
                       value={selectedDate}
@@ -282,9 +294,7 @@ const StadiumDetail = () => {
 
                   {/* Time Selection */}
                   <div>
-                    <label className="block text-sm font-black uppercase tracking-tight mb-2">
-                      Select Time
-                    </label>
+                    <label className="block text-sm font-black uppercase tracking-tight mb-2">Select Time</label>
                     <div className="grid grid-cols-2 gap-2">
                       {timeSlots.map((time) => (
                         <button
@@ -316,20 +326,16 @@ const StadiumDetail = () => {
                     <div className="border-t-2 border-foreground pt-2 mt-2">
                       <div className="flex justify-between">
                         <span className="font-black uppercase">Total</span>
-                        <span className="text-xl font-black text-primary">
-                          {stadium.price_per_hour * 2} DZD
-                        </span>
+                        <span className="text-xl font-black text-primary">{stadium.price_per_hour * 2} DZD</span>
                       </div>
                     </div>
                   </div>
 
-                  <Button onClick={handleBooking} className="w-full h-12" size="lg">
-                    Book Now
+                  <Button onClick={handleBooking} className="w-full h-12" size="lg" disabled={isBooking}>
+                    {isBooking ? "Booking..." : "Book Now"}
                   </Button>
 
-                  <p className="text-xs text-center text-foreground/60">
-                    No payment required now. Pay at the stadium.
-                  </p>
+                  <p className="text-xs text-center text-foreground/60">No payment required now. Pay at the stadium.</p>
                 </CardContent>
               </Card>
 
@@ -339,11 +345,11 @@ const StadiumDetail = () => {
                   <CardTitle className="text-lg">Contact Stadium</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start gap-2">
+                  <Button variant="outline" className="w-full justify-start gap-2 bg-transparent">
                     <Phone className="size-4" strokeWidth={2.5} />
                     +213 555 123 456
                   </Button>
-                  <Button variant="outline" className="w-full justify-start gap-2">
+                  <Button variant="outline" className="w-full justify-start gap-2 bg-transparent">
                     <Mail className="size-4" strokeWidth={2.5} />
                     contact@stadium.dz
                   </Button>

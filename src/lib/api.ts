@@ -1,4 +1,6 @@
 import { supabase } from "./supabase"
+import { getUserBalance as getBalance } from "./balanceService"
+import { getStadiums as getStadiumsFromDB, bookStadium } from "./stadiumService"
 
 export const getUserTeamMemberships = async (userId: number) => {
   const { data, error } = await supabase
@@ -132,38 +134,44 @@ export const getUserStats = async (userId: number) => {
 }
 
 export const getNearbyStadiums = async (userLatitude?: number, userLongitude?: number) => {
-  const { data, error } = await supabase
-    .from("stadiums")
-    .select(
-      `
-      stadium_id,
-      stadium_name,
-      location,
-      latitude,
-      longitude,
-      capacity,
-      surface_type,
-      amenities,
-      price_per_hour,
-      rating,
-      status,
-      created_at
-    `,
-    )
-    .eq("status", "active")
-    .order("rating", { ascending: false })
+  try {
+    const { data, error } = await supabase
+      .from("stadiums")
+      .select(
+        `
+        stadium_id,
+        stadium_name,
+        location,
+        latitude,
+        longitude,
+        capacity,
+        price_per_hour,
+        rating,
+        status,
+        created_at
+      `,
+      )
+      .eq("status", "active")
+      .order("rating", { ascending: false })
 
-  if (error) throw error
+    if (error) {
+      console.warn("[v0] Database error, returning empty:", error)
+      return []
+    }
 
-  // Calculate distance if user location is available
-  if (userLatitude && userLongitude && data) {
-    return data.map((stadium) => ({
-      ...stadium,
-      distance: calculateDistance(userLatitude, userLongitude, stadium.latitude, stadium.longitude),
-    }))
+    // Calculate distance if user location is available
+    if (userLatitude && userLongitude && data) {
+      return data.map((stadium) => ({
+        ...stadium,
+        distance: calculateDistance(userLatitude, userLongitude, stadium.latitude, stadium.longitude),
+      }))
+    }
+
+    return data || []
+  } catch (error) {
+    console.error("[v0] Error in getNearbyStadiums:", error)
+    return []
   }
-
-  return data
 }
 
 export const getStadiumDetails = async (stadiumId: number) => {
@@ -177,8 +185,6 @@ export const getStadiumDetails = async (stadiumId: number) => {
       latitude,
       longitude,
       capacity,
-      surface_type,
-      amenities,
       price_per_hour,
       rating,
       status,
@@ -197,65 +203,14 @@ export const getStadiumDetails = async (stadiumId: number) => {
   return data
 }
 
-export const getAllStadiums = async (filters?: {
-  capacity?: "small" | "medium" | "large"
-  priceRange?: "budget" | "mid" | "premium"
-  amenities?: string[]
-  status?: string
-}) => {
-  let query = supabase
-    .from("stadiums")
-    .select(
-      `
-      stadium_id,
-      stadium_name,
-      location,
-      latitude,
-      longitude,
-      capacity,
-      surface_type,
-      amenities,
-      price_per_hour,
-      rating,
-      status
-    `,
-    )
-    .eq("status", filters?.status || "active")
-
-  // Apply capacity filters
-  if (filters?.capacity) {
-    switch (filters.capacity) {
-      case "small":
-        query = query.lt("capacity", 5000)
-        break
-      case "medium":
-        query = query.gte("capacity", 5000).lt("capacity", 10000)
-        break
-      case "large":
-        query = query.gte("capacity", 10000)
-        break
-    }
+export const getAllStadiums = async (filters?: any) => {
+  try {
+    const stadiums = await getStadiumsFromDB(filters)
+    return stadiums
+  } catch (error) {
+    console.error("[v0] Error in getAllStadiums:", error)
+    return []
   }
-
-  // Apply price filters
-  if (filters?.priceRange) {
-    switch (filters.priceRange) {
-      case "budget":
-        query = query.lt("price_per_hour", 500)
-        break
-      case "mid":
-        query = query.gte("price_per_hour", 500).lt("price_per_hour", 1000)
-        break
-      case "premium":
-        query = query.gte("price_per_hour", 1000)
-        break
-    }
-  }
-
-  const { data, error } = await query.order("rating", { ascending: false })
-
-  if (error) throw error
-  return data || []
 }
 
 export const searchStadiums = async (query: string) => {
@@ -269,8 +224,6 @@ export const searchStadiums = async (query: string) => {
       latitude,
       longitude,
       capacity,
-      surface_type,
-      amenities,
       price_per_hour,
       rating,
       status
@@ -311,6 +264,20 @@ export const getStadiumAvailability = async (stadiumId: number, date: string) =>
     availableSlots,
     bookedSlots: Array.from(bookedSlots),
   }
+}
+
+export const getUserBalance = getBalance
+
+export const bookStadiumSlot = async (
+  stadiumId: number,
+  teamId: number,
+  userId: number,
+  date: string,
+  time: string,
+  fee: number,
+) => {
+  const result = await bookStadium(stadiumId, teamId, userId, date, time, fee)
+  return result
 }
 
 export const createStadiumBooking = async (

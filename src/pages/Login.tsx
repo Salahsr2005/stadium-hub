@@ -48,7 +48,7 @@ const Login = () => {
           <div className="w-12 h-12 bg-primary border-2 border-foreground rounded-lg shadow-neo flex items-center justify-center">
             <span className="text-primary-foreground font-black text-2xl">S</span>
           </div>
-          <span className="font-black text-2xl uppercase tracking-tighter">StadiumHub</span>
+          <span className="font-black text-2xl uppercase tracking-tighter">Matiko</span>
         </Link>
 
         <Card className="shadow-neo-xl">

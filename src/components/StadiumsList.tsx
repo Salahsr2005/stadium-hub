@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { getNearbyStadiums } from "@/lib/api"
 import { MapPin, Star, Users, Clock, TrendingUp } from "lucide-react"
@@ -14,10 +14,10 @@ interface Stadium {
   latitude: number
   longitude: number
   capacity: number
-  surface_type: string
   price_per_hour: number
   rating: number
   distance?: number
+  image_url?: string
 }
 
 interface StadiumsListProps {
@@ -92,10 +92,18 @@ export const StadiumsList = ({ userLatitude, userLongitude, onStadiumSelect }: S
           sortedStadiums.map((stadium) => (
             <Card
               key={stadium.stadium_id}
-              className="hover:shadow-neo-xl cursor-pointer transition-all group border-2 border-foreground"
+              className="hover:shadow-neo-xl cursor-pointer transition-all group border-2 border-foreground overflow-hidden flex flex-col"
               onClick={() => onStadiumSelect?.(stadium)}
             >
-              <CardHeader className="pb-3">
+              <div className="w-full h-40 bg-secondary/50 overflow-hidden border-b-2 border-foreground">
+                <img
+                  src={stadium.image_url || `/placeholder.svg?height=160&width=400&query=${stadium.stadium_name}`}
+                  alt={stadium.stadium_name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+              </div>
+
+              <CardHeader className="pb-3 flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <CardTitle className="text-lg group-hover:text-primary transition-colors">
@@ -106,7 +114,6 @@ export const StadiumsList = ({ userLatitude, userLongitude, onStadiumSelect }: S
                       {stadium.location}
                     </p>
                   </div>
-                  <Badge className="bg-primary text-primary-foreground border-foreground">{stadium.surface_type}</Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -123,25 +130,27 @@ export const StadiumsList = ({ userLatitude, userLongitude, onStadiumSelect }: S
                   </div>
                   <div className="flex items-center gap-2 p-2 bg-secondary/30 rounded border border-foreground/20">
                     <Star className="size-4 text-yellow-500 fill-yellow-500" strokeWidth={2.5} />
-                    <span className="font-bold">{stadium.rating.toFixed(1)}</span>
+                    <span className="font-bold">{(stadium.rating || 4.5).toFixed(1)}</span>
                   </div>
                   <div className="flex items-center gap-2 p-2 bg-secondary/30 rounded border border-foreground/20">
                     <Clock className="size-4 text-primary" strokeWidth={2.5} />
-                    <span className="font-bold">${stadium.price_per_hour}</span>
+                    <span className="font-bold">{stadium.price_per_hour || 2500} DZD</span>
                   </div>
                 </div>
 
-                <Button
-                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground bg-transparent"
-                  variant="outline"
-                  size="sm"
-                >
-                  View Details
-                  <TrendingUp
-                    className="size-3 ml-1 group-hover:translate-x-1 transition-transform"
-                    strokeWidth={2.5}
-                  />
-                </Button>
+                <Link to={`/stadium/${stadium.stadium_id}`} className="block w-full">
+                  <Button
+                    className="w-full group-hover:bg-primary group-hover:text-primary-foreground bg-transparent"
+                    variant="outline"
+                    size="sm"
+                  >
+                    View Details
+                    <TrendingUp
+                      className="size-3 ml-1 group-hover:translate-x-1 transition-transform"
+                      strokeWidth={2.5}
+                    />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           ))

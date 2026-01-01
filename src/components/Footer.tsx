@@ -15,7 +15,7 @@ const footerLinks = {
     { label: "FAQs", href: "/faqs" },
   ],
   contact: [
-    { label: "support@stadiumhub.com", href: "mailto:support@stadiumhub.com" },
+    { label: "support@Matiko.com", href: "mailto:support@Matiko.com" },
     { label: "+1 (555) 123-4567", href: "tel:+15551234567" },
     { label: "123 Stadium Way, Sports City", href: "#" },
   ],
@@ -40,7 +40,7 @@ export const Footer = () => {
                 <span className="text-primary-foreground font-black text-xl">S</span>
               </div>
               <span className="font-black text-xl uppercase tracking-tighter text-background">
-                StadiumHub
+                Matiko
               </span>
             </Link>
             <p className="font-medium text-background/80 mb-6">
@@ -122,7 +122,7 @@ export const Footer = () => {
         <div className="mt-12 pt-8 border-t-2 border-primary">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="font-medium text-background/80 text-sm">
-              © 2024 StadiumHub. All rights reserved.
+              © 2024 Matiko. All rights reserved.
             </p>
             <div className="flex gap-6">
               <Link

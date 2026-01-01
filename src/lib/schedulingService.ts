@@ -7,7 +7,6 @@ export interface MatchSchedule {
   stadium_id: number
   match_date: string
   start_time: string
-  end_time: string
   entry_fee: number
   total_prize_pool: number
   status: "scheduled" | "completed" | "cancelled"
@@ -45,8 +44,6 @@ export const createMatchSchedule = async (
   startTime: string,
   entryFee: number,
 ): Promise<MatchSchedule> => {
-  const endTime = calculateEndTime(startTime)
-
   const { data, error } = await supabase
     .from("schedules")
     .insert({
@@ -55,7 +52,6 @@ export const createMatchSchedule = async (
       stadium_id: stadiumId,
       match_date: matchDate,
       start_time: startTime,
-      end_time: endTime,
       entry_fee: entryFee,
       total_prize_pool: entryFee * 2 * 11,
       status: "scheduled",
@@ -141,7 +137,6 @@ export const getScheduledMatches = async (filters?: {
       stadium_id,
       match_date,
       start_time,
-      end_time,
       entry_fee,
       total_prize_pool,
       status,
@@ -198,7 +193,6 @@ export const getUpcomingMatches = async (
       stadium_id,
       match_date,
       start_time,
-      end_time,
       entry_fee,
       total_prize_pool,
       status,
@@ -292,7 +286,6 @@ export const getMatchRecommendations = async (userId: number, userTeamIds: numbe
       stadium_id,
       match_date,
       start_time,
-      end_time,
       entry_fee,
       total_prize_pool,
       status,

@@ -38,8 +38,6 @@ const Favorites = () => {
               latitude,
               longitude,
               capacity,
-              surface_type,
-              amenities,
               price_per_hour,
               rating,
               status
@@ -174,23 +172,11 @@ const Favorites = () => {
                   </div>
                   <div className="col-span-2">
                     <p className="text-xs font-bold uppercase text-foreground/60">Surface Type</p>
-                    <p className="text-sm font-bold mt-1">{stadium.surface_type}</p>
+                    
                   </div>
                 </div>
 
-                {/* Amenities */}
-                {stadium.amenities && stadium.amenities.length > 0 && (
-                  <div className="pt-2 border-t border-foreground/20">
-                    <p className="text-xs font-bold uppercase text-foreground/60 mb-2">Amenities</p>
-                    <div className="flex flex-wrap gap-2">
-                      {stadium.amenities.map((amenity: string, idx: number) => (
-                        <Badge key={idx} variant="outline">
-                          {amenity}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
+               
 
                 {/* Remove Button */}
                 <Button

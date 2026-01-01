@@ -1,4 +1,5 @@
-// Stadium Management Service with Real Integration
+// Stadium Management Service with Full Database Integration
+import { supabase } from "./supabase"
 import { seedStadiums } from "./seedData"
 
 export interface StadiumData {
@@ -8,12 +9,13 @@ export interface StadiumData {
   latitude: number
   longitude: number
   capacity: number
-  surface_type: string
-  amenities: string[]
+  surface_type?: string
+  amenities?: string[]
   price_per_hour: number
   rating: number
+  is_available?: boolean
   status: string
-  imageUrl: string
+  imageUrl?: string
 }
 
 export interface ScheduleData {
@@ -39,13 +41,51 @@ export interface BookingData {
   created_at?: string
 }
 
-// Get all stadiums with optional filtering
 export const getStadiums = async (filters?: {
   capacity?: number
   maxPrice?: number
   minRating?: number
   surface?: string
 }): Promise<StadiumData[]> => {
+  try {
+    let query = supabase.from("stadiums").select("*")
+
+    if (filters?.capacity) {
+      query = query.gte("capacity", filters.capacity)
+    }
+    if (filters?.maxPrice) {
+      query = query.lte("price_per_hour", filters.maxPrice)
+    }
+    if (filters?.minRating) {
+      query = query.gte("rating", filters.minRating)
+    }
+
+    const { data, error } = await query.eq("is_available", true)
+
+    if (error || !data) {
+      console.warn("[v0] Database query failed, using seed data:", error)
+      return getStadiumsFromSeed(filters)
+    }
+
+    return data.map((stadium) => ({
+      ...stadium,
+      rating: stadium.rating || 0,
+      price_per_hour: stadium.price_per_hour || 1000,
+      imageUrl:
+        stadium.imageUrl || `/placeholder.svg?height=300&width=400&query=${encodeURIComponent(stadium.stadium_name)}`,
+    }))
+  } catch (error) {
+    console.error("[v0] Error fetching stadiums:", error)
+    return getStadiumsFromSeed(filters)
+  }
+}
+
+const getStadiumsFromSeed = (filters?: {
+  capacity?: number
+  maxPrice?: number
+  minRating?: number
+  surface?: string
+}): StadiumData[] => {
   let stadiums = [...seedStadiums]
 
   if (filters) {
@@ -58,17 +98,35 @@ export const getStadiums = async (filters?: {
     if (filters.minRating) {
       stadiums = stadiums.filter((s) => s.rating >= filters.minRating!)
     }
-    if (filters.surface) {
-      stadiums = stadiums.filter((s) => s.surface_type === filters.surface)
-    }
   }
 
-  return stadiums
+  return stadiums.map((s) => ({
+    ...s,
+    rating: s.rating || 0,
+    price_per_hour: s.price_per_hour || 1000,
+  }))
 }
 
-// Get stadium by ID
-export const getStadiumById = (stadiumId: number): StadiumData | null => {
-  return seedStadiums.find((s) => s.stadium_id === stadiumId) || null
+export const getStadiumById = async (stadiumId: number): Promise<StadiumData | null> => {
+  try {
+    const { data, error } = await supabase.from("stadiums").select("*").eq("stadium_id", stadiumId).single()
+
+    if (error || !data) {
+      console.warn("[v0] Database stadium fetch failed, checking seed data:", error)
+      const seedStadium = seedStadiums.find((s) => s.stadium_id === stadiumId)
+      return seedStadium || null
+    }
+
+    return {
+      ...data,
+      rating: data.rating || 0,
+      price_per_hour: data.price_per_hour || 1000,
+      imageUrl: data.imageUrl || `/placeholder.svg?height=300&width=400&query=${encodeURIComponent(data.stadium_name)}`,
+    }
+  } catch (error) {
+    console.error("[v0] Error fetching stadium:", error)
+    return seedStadiums.find((s) => s.stadium_id === stadiumId) || null
+  }
 }
 
 // Get available schedules for a stadium
@@ -76,11 +134,9 @@ export const getAvailableSchedules = (stadiumId: number, startDate: Date, days =
   const schedules: ScheduleData[] = []
   const currentDate = new Date(startDate)
 
-  // Generate available time slots for next 30 days
   for (let i = 0; i < days; i++) {
     const dateStr = currentDate.toISOString().split("T")[0]
 
-    // Morning slots (06:00-12:00)
     schedules.push({
       schedule_id: Number.parseInt(`${stadiumId}${i}01`),
       stadium_id: stadiumId,
@@ -91,7 +147,6 @@ export const getAvailableSchedules = (stadiumId: number, startDate: Date, days =
       available_slots: 1,
     })
 
-    // Afternoon slots (12:00-18:00)
     schedules.push({
       schedule_id: Number.parseInt(`${stadiumId}${i}02`),
       stadium_id: stadiumId,
@@ -102,7 +157,6 @@ export const getAvailableSchedules = (stadiumId: number, startDate: Date, days =
       available_slots: 1,
     })
 
-    // Evening slots (18:00-22:00) - Most popular
     schedules.push({
       schedule_id: Number.parseInt(`${stadiumId}${i}03`),
       stadium_id: stadiumId,
@@ -119,30 +173,107 @@ export const getAvailableSchedules = (stadiumId: number, startDate: Date, days =
   return schedules.filter((s) => !s.is_booked)
 }
 
-// Book a stadium schedule
 export const bookStadium = async (
   stadiumId: number,
   teamId: number,
   userId: number,
   matchDate: string,
   startTime: string,
-  endTime: string,
   entryFee: number,
-): Promise<BookingData> => {
-  const booking: BookingData = {
-    booking_id: `BOOK_${Date.now()}`,
-    stadium_id: stadiumId,
-    match_date: matchDate,
-    start_time: startTime,
-    end_time: endTime,
-    team_id: teamId,
-    user_id: userId,
-    entry_fee: entryFee,
-    status: "confirmed",
-    created_at: new Date().toISOString(),
-  }
+): Promise<{ success: boolean; message: string; booking?: BookingData }> => {
+  try {
+    // Verify user has sufficient balance
+    const { data: userBalance, error: balanceError } = await supabase
+      .from("users")
+      .select("wallet_balance")
+      .eq("user_id", userId)
+      .single()
 
-  return booking
+    if (balanceError || !userBalance) {
+      return { success: false, message: "Unable to verify user balance" }
+    }
+
+    if (userBalance.wallet_balance < entryFee) {
+      return {
+        success: false,
+        message: `Insufficient balance. You need ${entryFee} DZD but only have ${userBalance.wallet_balance} DZD`,
+      }
+    }
+
+    // Get stadium info
+    const stadium = await getStadiumById(stadiumId)
+    if (!stadium) {
+      return { success: false, message: "Stadium not found" }
+    }
+
+    // Calculate end time (assume 2 hour matches)
+    const [hour] = startTime.split(":").map(Number)
+    const endTime = `${String(hour + 2).padStart(2, "0")}:00`
+
+    // Create booking in database
+    const { data: bookingData, error: bookingError } = await supabase
+      .from("schedules")
+      .insert({
+        stadium_id: stadiumId,
+        team_id: teamId,
+        match_date: matchDate,
+        start_time: startTime,
+        end_time: endTime,
+        status: "scheduled",
+      })
+      .select()
+      .single()
+
+    if (bookingError) {
+      return { success: false, message: "Failed to create booking" }
+    }
+
+    // Deduct balance for entry fee
+    const newBalance = userBalance.wallet_balance - entryFee
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({ wallet_balance: newBalance })
+      .eq("user_id", userId)
+
+    if (updateError) {
+      console.error("[v0] Balance update failed:", updateError)
+      return { success: false, message: "Failed to process payment" }
+    }
+
+    // Record transaction
+    const { error: txError } = await supabase.from("transactions").insert({
+      user_id: userId,
+      type: "entry_fee",
+      amount: entryFee,
+      created_at: new Date().toISOString(),
+    })
+
+    if (txError) {
+      console.warn("[v0] Transaction record failed:", txError)
+    }
+
+    const booking: BookingData = {
+      booking_id: `BOOK_${bookingData?.schedule_id || Date.now()}`,
+      stadium_id: stadiumId,
+      match_date: matchDate,
+      start_time: startTime,
+      end_time: endTime,
+      team_id: teamId,
+      user_id: userId,
+      entry_fee: entryFee,
+      status: "confirmed",
+      created_at: new Date().toISOString(),
+    }
+
+    return {
+      success: true,
+      message: `Successfully booked ${stadium.stadium_name} for ${entryFee} DZD. New balance: ${newBalance} DZD`,
+      booking,
+    }
+  } catch (error) {
+    console.error("[v0] Booking error:", error)
+    return { success: false, message: "Booking failed. Please try again." }
+  }
 }
 
 // Get nearby stadiums based on user location
@@ -166,7 +297,7 @@ export const getNearbyStadiums = async (
 
 // Calculate distance using Haversine formula
 export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-  const R = 6371 // Earth's radius in km
+  const R = 6371
   const dLat = ((lat2 - lat1) * Math.PI) / 180
   const dLon = ((lon2 - lon1) * Math.PI) / 180
   const a =
@@ -174,12 +305,6 @@ export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2
     Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return Math.round(R * c * 10) / 10
-}
-
-// Get stadium amenities
-export const getStadiumAmenities = (stadiumId: number): string[] => {
-  const stadium = getStadiumById(stadiumId)
-  return stadium?.amenities || []
 }
 
 // Get all unique surface types
@@ -200,7 +325,23 @@ export const rateStadium = async (
     return false
   }
 
-  // Mock implementation - would save to database
-  console.log(`[v0] Stadium ${stadiumId} rated ${rating} by user ${userId}: ${comment}`)
-  return true
+  try {
+    const { error } = await supabase.from("reviews").insert({
+      stadium_id: stadiumId,
+      user_id: userId,
+      rating: rating,
+      comment: comment,
+      created_at: new Date().toISOString(),
+    })
+
+    if (error) {
+      console.error("[v0] Rating submission error:", error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error("[v0] Rate stadium error:", error)
+    return false
+  }
 }

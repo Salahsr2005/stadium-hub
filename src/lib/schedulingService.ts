@@ -1,17 +1,22 @@
 import { supabase } from "./supabase"
 
-export interface MatchSchedule {
+export interface Schedule {
   schedule_id: number
-  team1_id: number
-  team2_id: number
   stadium_id: number
   match_date: string
   start_time: string
-  entry_fee: number
-  total_prize_pool: number
-  status: "scheduled" | "completed" | "cancelled"
-  winner_team_id?: number
+  is_booked: boolean
   created_at?: string
+}
+
+export interface ScheduleWithStadium extends Schedule {
+  stadium?: {
+    stadium_id: number
+    stadium_name: string
+    location: string
+    capacity: number
+    price_per_hour?: number
+  }
 }
 
 export interface TeamFormation {
@@ -37,34 +42,213 @@ export interface TeamFormation {
 }
 
 export const createMatchSchedule = async (
-  team1Id: number,
-  team2Id: number,
   stadiumId: number,
   matchDate: string,
   startTime: string,
-  entryFee: number,
-): Promise<MatchSchedule> => {
+): Promise<Schedule | null> => {
   const { data, error } = await supabase
     .from("schedules")
     .insert({
-      team1_id: team1Id,
-      team2_id: team2Id,
       stadium_id: stadiumId,
       match_date: matchDate,
       start_time: startTime,
-      entry_fee: entryFee,
-      total_prize_pool: entryFee * 2 * 11,
-      status: "scheduled",
+      is_booked: false,
     })
     .select()
     .single()
 
   if (error) {
     console.error("[v0] Error creating match schedule:", error)
-    throw error
+    return null
   }
 
   return data
+}
+
+// Get all schedules for a specific stadium
+export const getStadiumSchedules = async (stadiumId: number): Promise<ScheduleWithStadium[]> => {
+  const { data, error } = await supabase
+    .from("schedules")
+    .select(
+      `
+      schedule_id,
+      stadium_id,
+      match_date,
+      start_time,
+      is_booked,
+      created_at,
+      stadiums (stadium_id, stadium_name, location, capacity, price_per_hour)
+    `,
+    )
+    .eq("stadium_id", stadiumId)
+    .order("match_date", { ascending: true })
+    .order("start_time", { ascending: true })
+
+  if (error) {
+    console.error("[v0] Error fetching stadium schedules:", error)
+    return []
+  }
+
+  return data || []
+}
+
+// Get available time slots for a specific date and stadium
+export const getAvailableSlots = async (
+  stadiumId: number,
+  matchDate: string,
+): Promise<{ time: string; available: boolean }[]> => {
+  const { data, error } = await supabase
+    .from("schedules")
+    .select("start_time, is_booked")
+    .eq("stadium_id", stadiumId)
+    .eq("match_date", matchDate)
+
+  if (error) {
+    console.error("[v0] Error fetching available slots:", error)
+    return []
+  }
+
+  const bookedTimes = new Set((data || []).filter((s) => s.is_booked).map((s) => s.start_time))
+
+  const timeSlots = [
+    "08:00",
+    "09:00",
+    "10:00",
+    "11:00",
+    "12:00",
+    "13:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00",
+    "18:00",
+    "19:00",
+    "20:00",
+    "21:00",
+    "22:00",
+  ]
+
+  return timeSlots.map((time) => ({
+    time,
+    available: !bookedTimes.has(time),
+  }))
+}
+
+// Create a new schedule entry
+export const createSchedule = async (
+  stadiumId: number,
+  matchDate: string,
+  startTime: string,
+): Promise<Schedule | null> => {
+  const { data, error } = await supabase
+    .from("schedules")
+    .insert({
+      stadium_id: stadiumId,
+      match_date: matchDate,
+      start_time: startTime,
+      is_booked: false,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error("[v0] Error creating schedule:", error)
+    return null
+  }
+
+  return data
+}
+
+// Book a schedule (mark as_booked)
+export const bookSchedule = async (scheduleId: number): Promise<boolean> => {
+  const { error } = await supabase.from("schedules").update({ is_booked: true }).eq("schedule_id", scheduleId)
+
+  if (error) {
+    console.error("[v0] Error booking schedule:", error)
+    return false
+  }
+
+  return true
+}
+
+// Cancel a booking (mark as not booked)
+export const cancelSchedule = async (scheduleId: number): Promise<boolean> => {
+  const { error } = await supabase.from("schedules").update({ is_booked: false }).eq("schedule_id", scheduleId)
+
+  if (error) {
+    console.error("[v0] Error cancelling schedule:", error)
+    return false
+  }
+
+  return true
+}
+
+// Get upcoming available schedules
+export const getUpcomingAvailable = async (days = 30): Promise<ScheduleWithStadium[]> => {
+  const today = new Date()
+  const futureDate = new Date(today.getTime() + days * 24 * 60 * 60 * 1000)
+
+  const { data, error } = await supabase
+    .from("schedules")
+    .select(
+      `
+      schedule_id,
+      stadium_id,
+      match_date,
+      start_time,
+      is_booked,
+      created_at,
+      stadiums (stadium_id, stadium_name, location, capacity, price_per_hour)
+    `,
+    )
+    .eq("is_booked", false)
+    .gte("match_date", today.toISOString().split("T")[0])
+    .lte("match_date", futureDate.toISOString().split("T")[0])
+    .order("match_date", { ascending: true })
+    .order("start_time", { ascending: true })
+
+  if (error) {
+    console.error("[v0] Error fetching upcoming available schedules:", error)
+    return []
+  }
+
+  return data || []
+}
+
+// Get schedules by date range
+export const getSchedulesByDateRange = async (
+  startDate: string,
+  endDate: string,
+  stadiumId?: number,
+): Promise<ScheduleWithStadium[]> => {
+  let query = supabase
+    .from("schedules")
+    .select(
+      `
+      schedule_id,
+      stadium_id,
+      match_date,
+      start_time,
+      is_booked,
+      created_at,
+      stadiums (stadium_id, stadium_name, location, capacity, price_per_hour)
+    `,
+    )
+    .gte("match_date", startDate)
+    .lte("match_date", endDate)
+
+  if (stadiumId) {
+    query = query.eq("stadium_id", stadiumId)
+  }
+
+  const { data, error } = await query.order("match_date", { ascending: true })
+
+  if (error) {
+    console.error("[v0] Error fetching schedules by date range:", error)
+    return []
+  }
+
+  return data || []
 }
 
 // Calculate end time (2 hours after start)
@@ -122,31 +306,25 @@ export const getAvailableOpponents = async (teamId: number, stadiumId: number): 
 }
 
 export const getScheduledMatches = async (filters?: {
-  status?: "scheduled" | "completed" | "cancelled"
+  is_booked?: boolean
   stadiumId?: number
   fromDate?: string
   toDate?: string
-  teamId?: number
-  limit?: number
-}): Promise<MatchSchedule[]> => {
+}): Promise<ScheduleWithStadium[]> => {
   let query = supabase.from("schedules").select(
     `
       schedule_id,
-      team1_id,
-      team2_id,
       stadium_id,
       match_date,
       start_time,
-      entry_fee,
-      total_prize_pool,
-      status,
-      winner_team_id,
-      created_at
+      is_booked,
+      created_at,
+      stadiums (stadium_id, stadium_name, location, capacity, price_per_hour)
     `,
   )
 
-  if (filters?.status) {
-    query = query.eq("status", filters.status)
+  if (filters?.is_booked !== undefined) {
+    query = query.eq("is_booked", filters.is_booked)
   }
 
   if (filters?.stadiumId) {
@@ -161,54 +339,10 @@ export const getScheduledMatches = async (filters?: {
     query = query.lte("match_date", filters.toDate)
   }
 
-  if (filters?.teamId) {
-    query = query.or(`team1_id.eq.${filters.teamId},team2_id.eq.${filters.teamId}`)
-  }
-
-  const limit = filters?.limit || 50
-
-  const { data, error } = await query.order("match_date", { ascending: true }).limit(limit)
+  const { data, error } = await query.order("match_date", { ascending: true })
 
   if (error) {
     console.error("[v0] Error fetching schedules:", error)
-    return []
-  }
-
-  return data || []
-}
-
-export const getUpcomingMatches = async (
-  days = 30,
-): Promise<(MatchSchedule & { team1?: any; team2?: any; stadium?: any })[]> => {
-  const today = new Date()
-  const futureDate = new Date(today.getTime() + days * 24 * 60 * 60 * 1000)
-
-  const { data, error } = await supabase
-    .from("schedules")
-    .select(
-      `
-      schedule_id,
-      team1_id,
-      team2_id,
-      stadium_id,
-      match_date,
-      start_time,
-      entry_fee,
-      total_prize_pool,
-      status,
-      winner_team_id,
-      teams!schedules_team1_id_fkey (team_id, team_name, avg_skill),
-      teams!schedules_team2_id_fkey (team_id, team_name, avg_skill),
-      stadiums (stadium_id, stadium_name, location)
-    `,
-    )
-    .eq("status", "scheduled")
-    .gte("match_date", today.toISOString().split("T")[0])
-    .lte("match_date", futureDate.toISOString().split("T")[0])
-    .order("match_date", { ascending: true })
-
-  if (error) {
-    console.error("[v0] Error fetching upcoming matches:", error)
     return []
   }
 
@@ -272,7 +406,10 @@ export const calculateTeamBalance = (team: TeamFormation): number => {
   return Math.round(balanceScore)
 }
 
-export const getMatchRecommendations = async (userId: number, userTeamIds: number[] = []): Promise<MatchSchedule[]> => {
+export const getMatchRecommendations = async (
+  userId: number,
+  userTeamIds: number[] = [],
+): Promise<ScheduleWithStadium[]> => {
   const today = new Date()
   const futureDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
 
@@ -281,18 +418,15 @@ export const getMatchRecommendations = async (userId: number, userTeamIds: numbe
     .select(
       `
       schedule_id,
-      team1_id,
-      team2_id,
       stadium_id,
       match_date,
       start_time,
-      entry_fee,
-      total_prize_pool,
-      status,
-      winner_team_id
+      is_booked,
+      created_at,
+      stadiums (stadium_id, stadium_name, location, capacity, price_per_hour)
     `,
     )
-    .eq("status", "scheduled")
+    .eq("is_booked", false)
     .gte("match_date", today.toISOString().split("T")[0])
     .lte("match_date", futureDate.toISOString().split("T")[0])
 
@@ -304,51 +438,4 @@ export const getMatchRecommendations = async (userId: number, userTeamIds: numbe
   }
 
   return data || []
-}
-
-export const updateMatchStatus = async (
-  scheduleId: number,
-  status: "scheduled" | "completed" | "cancelled",
-  winnerTeamId?: number,
-): Promise<boolean> => {
-  const updateData: any = { status }
-  if (status === "completed" && winnerTeamId) {
-    updateData.winner_team_id = winnerTeamId
-  }
-
-  const { error } = await supabase.from("schedules").update(updateData).eq("schedule_id", scheduleId)
-
-  if (error) {
-    console.error("[v0] Error updating match status:", error)
-    return false
-  }
-
-  return true
-}
-
-// Suggest best match time based on availability
-export const suggestBestMatchTime = (userPreferences: {
-  preferredDays: number[]
-  preferredTimes: string[]
-  timezone: string
-}): { date: string; time: string }[] => {
-  const suggestions: { date: string; time: string }[] = []
-  const today = new Date()
-
-  for (let i = 1; i <= 7; i++) {
-    const checkDate = new Date(today)
-    checkDate.setDate(today.getDate() + i)
-    const dayOfWeek = checkDate.getDay()
-
-    if (userPreferences.preferredDays.includes(dayOfWeek)) {
-      userPreferences.preferredTimes.forEach((time) => {
-        suggestions.push({
-          date: checkDate.toISOString().split("T")[0],
-          time: time,
-        })
-      })
-    }
-  }
-
-  return suggestions.slice(0, 5)
 }
